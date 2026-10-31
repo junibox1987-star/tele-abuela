@@ -737,9 +737,14 @@
             const text = (data.text || '').trim();
             if (!text) return;
 
+            // Ignorar duplicados exactos si llegan repetidos por eventos concurrentes
+            if (lastMessageEl && lastSender === data.sender && text.toLowerCase() === lastText.toLowerCase() && (now - lastMsgTime < 4500)) {
+              return;
+            }
+
             // DEDUPLICACIÓN INTELIGENTE:
-            // Si el mensaje anterior es del mismo remitente y el nuevo texto comienza con el anterior
-            // o el anterior comienza con el nuevo, o fue enviado hace menos de 2.5s con contenido similar:
+            // Si el mensaje anterior es del mismo remitente y el nuevo texto expande el anterior
+            // o fue enviado hace menos de 2.5s como parte de la misma idea:
             const isContinuation = lastMessageEl && lastSender === data.sender && (
               text.toLowerCase().startsWith(lastText.toLowerCase()) ||
               lastText.toLowerCase().startsWith(text.toLowerCase()) ||
@@ -845,8 +850,10 @@
       let wakeLock = null;
 
       let currentUtteranceId = 'utt_' + Date.now();
-      let currentSentence = '';
+      let lastCommittedText = '';
+      let currentSentenceText = '';
       let silenceTimeout = null;
+      let lastPublishedFinal = '';
 
       // Selección de persona
       chips.forEach(chip => {
@@ -876,29 +883,30 @@
         }
       }
 
+      function commitSentence() {
+        const textToCommit = currentSentenceText.trim();
+        if (textToCommit && textToCommit !== lastPublishedFinal) {
+          lastPublishedFinal = textToCommit;
+          client.publish(MQTT_TOPIC, JSON.stringify({
+            type: 'final',
+            id: currentUtteranceId,
+            sender: currentSender,
+            color: currentColor,
+            text: textToCommit
+          }));
+
+          lastCommittedText = (lastCommittedText + ' ' + textToCommit).trim();
+          currentSentenceText = '';
+          currentUtteranceId = 'utt_' + Date.now();
+          // OJO: ¡NUNCA llamar recognition.abort()! Mantener la sesión abierta para no activar el sonido de dictado de Android.
+        }
+      }
+
       function resetSilenceTimer() {
         clearTimeout(silenceTimeout);
         silenceTimeout = setTimeout(() => {
-          if (currentSentence.trim()) {
-            // Silencio de 1.4s detectado: finalizamos y consolidamos esta frase
-            client.publish(MQTT_TOPIC, JSON.stringify({
-              type: 'final',
-              id: currentUtteranceId,
-              sender: currentSender,
-              color: currentColor,
-              text: currentSentence.trim()
-            }));
-
-            // Nueva frase limpia
-            currentUtteranceId = 'utt_' + Date.now();
-            currentSentence = '';
-
-            // Reinicio de búfer en Android Chrome para no acumular palabras viejas
-            if (continuousSwitch.checked && isRecording) {
-              try { recognition.abort(); } catch(e) {}
-            }
-          }
-        }, 1400);
+          commitSentence();
+        }, 1500);
       }
 
       // Reconocimiento de Voz Web Speech API
@@ -922,23 +930,34 @@
           };
 
           recognition.onresult = (event) => {
-            let sentence = '';
+            let fullTranscript = '';
             for (let i = 0; i < event.results.length; ++i) {
-              sentence += event.results[i][0].transcript + ' ';
+              fullTranscript += event.results[i][0].transcript + ' ';
             }
-            sentence = sentence.trim();
-            if (!sentence) return;
+            fullTranscript = fullTranscript.trim();
+            if (!fullTranscript) return;
 
-            currentSentence = sentence;
-            previewText.textContent = sentence;
+            // Extraer solo las palabras nuevas después de lo que ya se consolidó en la frase anterior
+            let fresh = fullTranscript;
+            if (lastCommittedText && fresh.toLowerCase().startsWith(lastCommittedText.toLowerCase())) {
+              fresh = fresh.substring(lastCommittedText.length).trim();
+            } else if (lastCommittedText && !fresh.toLowerCase().includes(lastCommittedText.toLowerCase().substring(0, 15))) {
+              // El búfer nativo de Android se reseteó por silencio
+              lastCommittedText = '';
+            }
 
-            // Enviar texto en tiempo real palabra por palabra
+            if (!fresh) return;
+
+            currentSentenceText = fresh;
+            previewText.textContent = fresh;
+
+            // Enviar texto en tiempo real palabra por palabra a la TV
             client.publish(MQTT_TOPIC, JSON.stringify({
               type: 'interim',
               id: currentUtteranceId,
               sender: currentSender,
               color: currentColor,
-              text: sentence
+              text: fresh
             }));
 
             resetSilenceTimer();
@@ -950,19 +969,11 @@
 
           recognition.onend = () => {
             clearTimeout(silenceTimeout);
-            if (currentSentence.trim()) {
-              client.publish(MQTT_TOPIC, JSON.stringify({
-                type: 'final',
-                id: currentUtteranceId,
-                sender: currentSender,
-                color: currentColor,
-                text: currentSentence.trim()
-              }));
-              currentUtteranceId = 'utt_' + Date.now();
-              currentSentence = '';
-            }
+            commitSentence();
+            lastCommittedText = '';
 
             if (continuousSwitch.checked && isRecording) {
+              // Solo se reinicia si Android corta la sesión por inactividad prolongada (timeout nativo)
               try { recognition.start(); } catch(e) {}
             } else {
               isRecording = false;
