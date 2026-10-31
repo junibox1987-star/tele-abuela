@@ -190,6 +190,71 @@
       line-height: 1.4;
     }
 
+    /* Overlay de Medios en la TV (Fotos y Videos) */
+    .tv-media-overlay {
+      display: none;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3vh 4vw;
+      animation: fadeIn 0.3s ease;
+    }
+    .tv-media-badge {
+      position: absolute;
+      top: 3vh; left: 4vw;
+      font-size: 1.8vw;
+      font-weight: 800;
+      background: rgba(30, 41, 59, 0.9);
+      padding: 8px 24px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #F8FAFC;
+    }
+    .tv-media-img {
+      max-height: 75vh;
+      max-width: 90vw;
+      border-radius: 20px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
+      object-fit: contain;
+      display: none;
+    }
+    .tv-media-video-wrap {
+      width: 85vw;
+      height: 75vh;
+      max-width: 1280px;
+      max-height: 720px;
+      border-radius: 20px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
+    }
+    .tv-media-video-wrap iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    .tv-media-subtitles {
+      position: absolute;
+      bottom: 3.5vh;
+      left: 5vw; right: 5vw;
+      text-align: center;
+      font-size: clamp(2rem, 3.8vw, 4rem);
+      font-weight: 900;
+      color: #FFE600;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95);
+      background: rgba(0, 0, 0, 0.85);
+      padding: 12px 28px;
+      border-radius: 18px;
+      border: 2px solid rgba(255, 230, 0, 0.4);
+      display: none;
+    }
+
     /* ============================================================ */
     /* VISTA DEL CELULAR (MICRÓFONO)                                */
     /* ============================================================ */
@@ -198,8 +263,9 @@
       flex-direction: column;
       min-height: 100vh;
       background: #0B0F19;
-      padding: 20px;
-      max-width: 540px;
+      color: #F8FAFC;
+      padding: 18px;
+      max-width: 480px;
       margin: 0 auto;
     }
 
@@ -207,142 +273,93 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 16px;
     }
     .mic-brand {
-      font-weight: 900;
-      font-size: 1.25rem;
-      color: #F8FAFC;
       display: flex;
       align-items: center;
       gap: 8px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.3px;
     }
     .mic-status-pill {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 999px;
       background: rgba(16, 185, 129, 0.15);
       color: #10B981;
+      padding: 4px 10px;
+      border-radius: 999px;
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    /* Selector de persona */
+    /* Selector de locutor */
     .speaker-selector-card {
       background: #151D2F;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 16px;
-      margin: 18px 0;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 16px;
     }
     .speaker-selector-card label {
       display: block;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       font-weight: 800;
       color: #94A3B8;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       margin-bottom: 10px;
     }
     .speaker-chips {
       display: flex;
-      gap: 8px;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
     .speaker-chip {
-      padding: 8px 16px;
-      border-radius: 999px;
       background: #1E293B;
       color: #CBD5E1;
-      border: 2px solid transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.88rem;
       font-weight: 700;
-      font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
     .speaker-chip.active {
-      background: #2563EB;
+      background: #0284C7;
       color: #FFFFFF;
-      border-color: #60A5FA;
+      border-color: #38BDF8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
     }
     .custom-name-input {
       width: 100%;
       background: #0B0F19;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 10px;
+      padding: 8px 12px;
       color: #FFFFFF;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-family: inherit;
-      outline: none;
     }
     .custom-name-input:focus {
-      border-color: #3B82F6;
+      outline: none;
+      border-color: #38BDF8;
     }
 
-    /* Botón gigante de hablar */
-    .mic-button-zone {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: 20px 0;
-      text-align: center;
-    }
-    .big-mic-btn {
-      width: 190px;
-      height: 190px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(135deg, #2563EB, #1D4ED8);
-      color: #FFFFFF;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .big-mic-btn:active {
-      transform: scale(0.94);
-    }
-    .big-mic-btn svg {
-      width: 58px;
-      height: 58px;
-      fill: currentColor;
-    }
-    .big-mic-btn span {
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-
-    /* Estado grabando */
-    .big-mic-btn.recording {
-      background: linear-gradient(135deg, #EF4444, #DC2626);
-      box-shadow: 0 0 45px rgba(239, 68, 68, 0.6);
-      animation: pulse-recording 1.6s infinite;
-    }
-    @keyframes pulse-recording {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
-      50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(239, 68, 68, 0.8); }
-    }
-
-    /* Switch de modo continuo */
+    /* Switch de manos libres */
     .continuous-toggle-card {
+      background: #151D2F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #151D2F;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 14px 18px;
-      margin-bottom: 18px;
     }
     .continuous-text strong {
       display: block;
@@ -381,14 +398,62 @@
     input:checked + .slider { background-color: #10B981; }
     input:checked + .slider:before { transform: translateX(22px); }
 
+    /* Botón gigante */
+    .mic-button-zone {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .big-mic-btn {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 4px solid #38BDF8;
+      background: radial-gradient(circle, #0284C7 0%, #0369A1 100%);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .big-mic-btn:active {
+      transform: scale(0.94);
+    }
+    .big-mic-btn svg {
+      width: 48px;
+      height: 48px;
+      fill: currentColor;
+      margin-bottom: 4px;
+    }
+    .big-mic-btn span {
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .big-mic-btn.recording {
+      border-color: #EF4444;
+      background: radial-gradient(circle, #DC2626 0%, #991B1B 100%);
+      box-shadow: 0 0 35px rgba(239, 68, 68, 0.6);
+      animation: mic-pulse 1.4s infinite;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
     /* Previsualización en el celu */
     .preview-box {
       background: #151D2F;
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 14px;
       padding: 14px;
-      margin-bottom: 18px;
-      min-height: 80px;
+      margin-bottom: 14px;
+      min-height: 70px;
     }
     .preview-box label {
       font-size: 0.75rem;
@@ -400,10 +465,10 @@
       margin-bottom: 6px;
     }
     .preview-text {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
       color: #FFE600;
-      min-height: 28px;
+      min-height: 24px;
     }
 
     /* Botones de acción inferior */
@@ -419,8 +484,12 @@
       background: #1E293B;
       color: #E2E8F0;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     .btn-secondary:active { background: #334155; }
 
@@ -459,6 +528,19 @@
     <div class="tv-live-bubble" id="tv-live-bubble">
       <div class="tv-speaker-tag" id="tv-live-speaker">🎙️ HABLANDO AHORA</div>
       <div class="tv-live-text" id="tv-live-text">...</div>
+    </div>
+
+    <!-- Overlay de Fotos y Videos en TV -->
+    <div id="tv-media-overlay" class="tv-media-overlay">
+      <div class="tv-media-badge">
+        <span id="tv-media-icon">📷</span>
+        <span id="tv-media-sender">Foto de la familia</span>
+      </div>
+      <img id="tv-media-img" class="tv-media-img" alt="Foto para la abuela" />
+      <div id="tv-media-video-wrap" class="tv-media-video-wrap">
+        <iframe id="tv-media-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+      <div id="tv-media-subtitles" class="tv-media-subtitles"></div>
     </div>
   </div>
 
@@ -515,9 +597,21 @@
       <div class="preview-text" id="preview-text">Toca el botón y di algo...</div>
     </div>
 
-    <!-- Acciones -->
+    <!-- Acciones multimedia (Fotos y Videos) -->
+    <input type="file" id="photo-input" accept="image/*" style="display:none;">
+    <div class="mic-actions" style="margin-bottom: 10px;">
+      <button type="button" class="btn-secondary" id="btn-send-photo" style="background:#13253d; border-color:#38bdf8; color:#38bdf8;">📷 Mostrar Foto en TV</button>
+      <button type="button" class="btn-secondary" id="btn-send-video" style="background:#28183d; border-color:#c084fc; color:#c084fc;">🎥 Video YouTube</button>
+    </div>
+
+    <!-- Botón para cerrar foto/video en TV cuando esté abierto -->
+    <div id="btn-close-media-wrap" style="display: none; margin-bottom: 10px;">
+      <button type="button" class="btn-secondary" id="btn-close-media" style="background:#7f1d1d; border-color:#ef4444; width:100%; color:#fecaca;">❌ Quitar Foto / Video de la TV</button>
+    </div>
+
+    <!-- Acciones secundarias -->
     <div class="mic-actions">
-      <button type="button" class="btn-secondary" id="btn-clear-tv">🧹 Limpiar pantalla TV</button>
+      <button type="button" class="btn-secondary" id="btn-clear-tv">🧹 Limpiar TV</button>
       <button type="button" class="btn-secondary" id="btn-send-text">⌨️ Escribir texto</button>
     </div>
   </div>
@@ -575,19 +669,50 @@
       const tvLiveText = document.getElementById('tv-live-text');
       const tvStatusText = document.getElementById('tv-status-text');
 
+      const tvMediaOverlay = document.getElementById('tv-media-overlay');
+      const tvMediaImg = document.getElementById('tv-media-img');
+      const tvMediaVideoWrap = document.getElementById('tv-media-video-wrap');
+      const tvMediaIframe = document.getElementById('tv-media-iframe');
+      const tvMediaSender = document.getElementById('tv-media-sender');
+      const tvMediaIcon = document.getElementById('tv-media-icon');
+      const tvMediaSubtitles = document.getElementById('tv-media-subtitles');
+
       client.on('connect', () => {
         client.subscribe(MQTT_TOPIC);
         tvStatusText.textContent = "Conectado y listo";
       });
 
-      let idleTimeout;
       function resetIdle() {
         if (tvIdle) tvIdle.style.display = 'none';
-        clearTimeout(idleTimeout);
-        idleTimeout = setTimeout(() => {
-          // Si pasan 60s sin hablar, no borramos los últimos mensajes pero dejamos la pantalla calmada
-        }, 60000);
       }
+
+      let mediaSubtitleTimeout;
+      function showMediaSubtitle(sender, text, color) {
+        if (tvMediaOverlay && tvMediaOverlay.style.display === 'flex') {
+          tvMediaSubtitles.style.display = 'block';
+          tvMediaSubtitles.style.color = color || '#FFE600';
+          tvMediaSubtitles.textContent = `${sender}: ${text}`;
+          clearTimeout(mediaSubtitleTimeout);
+          mediaSubtitleTimeout = setTimeout(() => {
+            tvMediaSubtitles.style.display = 'none';
+          }, 8000);
+        }
+      }
+
+      function pruneMessages() {
+        while (tvMessages.children.length > 4) {
+          if (tvMessages.children[0] !== tvIdle) {
+            tvMessages.removeChild(tvMessages.children[0]);
+          } else {
+            tvMessages.removeChild(tvMessages.children[1]);
+          }
+        }
+      }
+
+      let lastMessageEl = null;
+      let lastSender = '';
+      let lastText = '';
+      let lastMsgTime = 0;
 
       client.on('message', (topic, payload) => {
         try {
@@ -601,29 +726,73 @@
             tvLiveSpeaker.style.color = data.color || '#FFE600';
             tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
             tvLiveText.textContent = data.text;
+            showMediaSubtitle(data.sender, data.text, data.color);
           } 
           else if (data.type === 'final') {
-            // Frase completada: se oculta la burbuja en vivo y se agrega al historial
             tvLiveBubble.style.display = 'none';
+            showMediaSubtitle(data.sender, data.text, data.color);
 
-            const msgEl = document.createElement('div');
-            msgEl.className = 'tv-msg';
-            msgEl.innerHTML = `
-              <div class="tv-speaker-tag" style="color: ${data.color || '#38BDF8'}">
-                <span>●</span> ${data.sender}
-              </div>
-              <div class="tv-text">${data.text}</div>
-            `;
-            tvMessages.appendChild(msgEl);
+            const now = Date.now();
+            const text = (data.text || '').trim();
+            if (!text) return;
 
-            // Mantener solo los últimos 3 mensajes para no saturar
-            while (tvMessages.children.length > 4) {
-              if (tvMessages.children[0] !== tvIdle) {
-                tvMessages.removeChild(tvMessages.children[0]);
-              } else {
-                tvMessages.removeChild(tvMessages.children[1]);
-              }
+            // DEDUPLICACIÓN INTELIGENTE:
+            // Si el mensaje anterior es del mismo remitente y el nuevo texto comienza con el anterior
+            // o el anterior comienza con el nuevo, o fue enviado hace menos de 2.5s con contenido similar:
+            const isContinuation = lastMessageEl && lastSender === data.sender && (
+              text.toLowerCase().startsWith(lastText.toLowerCase()) ||
+              lastText.toLowerCase().startsWith(text.toLowerCase()) ||
+              (now - lastMsgTime < 2500)
+            );
+
+            if (isContinuation) {
+              // Actualizamos el mensaje existente en lugar de crear un clon duplicado
+              lastMessageEl.querySelector('.tv-text').textContent = text;
+              lastText = text;
+              lastMsgTime = now;
+            } else {
+              // Frase nueva genuina
+              const msgEl = document.createElement('div');
+              msgEl.className = 'tv-msg';
+              msgEl.innerHTML = `
+                <div class="tv-speaker-tag" style="color: ${data.color || '#38BDF8'}">
+                  <span>●</span> ${data.sender}
+                </div>
+                <div class="tv-text">${text}</div>
+              `;
+              tvMessages.appendChild(msgEl);
+              lastMessageEl = msgEl;
+              lastSender = data.sender;
+              lastText = text;
+              lastMsgTime = now;
+              pruneMessages();
             }
+          }
+          else if (data.type === 'photo') {
+            tvMediaOverlay.style.display = 'flex';
+            tvMediaVideoWrap.style.display = 'none';
+            tvMediaIframe.src = '';
+            tvMediaImg.style.display = 'block';
+            tvMediaImg.src = data.image;
+            tvMediaIcon.textContent = '📷';
+            tvMediaSender.textContent = data.caption || `Foto de ${data.sender}`;
+            tvMediaSender.style.color = data.color || '#38BDF8';
+          }
+          else if (data.type === 'video') {
+            tvMediaOverlay.style.display = 'flex';
+            tvMediaImg.style.display = 'none';
+            tvMediaImg.src = '';
+            tvMediaVideoWrap.style.display = 'block';
+            tvMediaIframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0`;
+            tvMediaIcon.textContent = '🎥';
+            tvMediaSender.textContent = `Video de YouTube enviado por ${data.sender}`;
+            tvMediaSender.style.color = data.color || '#C084FC';
+          }
+          else if (data.type === 'close_media') {
+            tvMediaOverlay.style.display = 'none';
+            tvMediaImg.src = '';
+            tvMediaIframe.src = '';
+            tvMediaSubtitles.style.display = 'none';
           }
           else if (data.type === 'clear') {
             // Limpiar pantalla
@@ -635,6 +804,12 @@
               tvIdle.style.display = 'flex';
             }
             tvLiveBubble.style.display = 'none';
+            tvMediaOverlay.style.display = 'none';
+            tvMediaImg.src = '';
+            tvMediaIframe.src = '';
+            lastMessageEl = null;
+            lastSender = '';
+            lastText = '';
           }
         } catch (e) {
           console.error(e);
@@ -643,7 +818,7 @@
     }
 
     // ============================================================
-    // LÓGICA DEL CELULAR (MICRÓFONO)
+    // LÓGICA DEL CELULAR (MICRÓFONO Y MULTIMEDIA)
     // ============================================================
     else {
       document.getElementById('mic-view').style.display = 'flex';
@@ -656,11 +831,21 @@
       const customNameInput = document.getElementById('custom-name');
       const chips = document.querySelectorAll('.speaker-chip');
 
+      const photoInput = document.getElementById('photo-input');
+      const btnSendPhoto = document.getElementById('btn-send-photo');
+      const btnSendVideo = document.getElementById('btn-send-video');
+      const btnCloseMedia = document.getElementById('btn-close-media');
+      const btnCloseMediaWrap = document.getElementById('btn-close-media-wrap');
+
       let currentSender = "Víctor";
       let currentColor = "#38BDF8";
       let isRecording = false;
       let recognition = null;
       let wakeLock = null;
+
+      let currentUtteranceId = 'utt_' + Date.now();
+      let currentSentence = '';
+      let silenceTimeout = null;
 
       // Selección de persona
       chips.forEach(chip => {
@@ -690,7 +875,32 @@
         }
       }
 
-      // Reconocimiento de Voz Web Speech API (Nativo de Google en Android)
+      function resetSilenceTimer() {
+        clearTimeout(silenceTimeout);
+        silenceTimeout = setTimeout(() => {
+          if (currentSentence.trim()) {
+            // Silencio de 1.4s detectado: finalizamos y consolidamos esta frase
+            client.publish(MQTT_TOPIC, JSON.stringify({
+              type: 'final',
+              id: currentUtteranceId,
+              sender: currentSender,
+              color: currentColor,
+              text: currentSentence.trim()
+            }));
+
+            // Nueva frase limpia
+            currentUtteranceId = 'utt_' + Date.now();
+            currentSentence = '';
+
+            // Reinicio de búfer en Android Chrome para no acumular palabras viejas
+            if (continuousSwitch.checked && isRecording) {
+              try { recognition.abort(); } catch(e) {}
+            }
+          }
+        }, 1400);
+      }
+
+      // Reconocimiento de Voz Web Speech API
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
       if (!SpeechRecognition) {
@@ -711,50 +921,47 @@
           };
 
           recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-              if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
-              } else {
-                interimTranscript += event.results[i][0].transcript;
-              }
+            let sentence = '';
+            for (let i = 0; i < event.results.length; ++i) {
+              sentence += event.results[i][0].transcript + ' ';
             }
+            sentence = sentence.trim();
+            if (!sentence) return;
 
-            if (interimTranscript.trim()) {
-              previewText.textContent = interimTranscript;
-              // Enviar texto en tiempo real palabra por palabra
-              client.publish(MQTT_TOPIC, JSON.stringify({
-                type: 'interim',
-                sender: currentSender,
-                color: currentColor,
-                text: interimTranscript
-              }));
-            }
+            currentSentence = sentence;
+            previewText.textContent = sentence;
 
-            if (finalTranscript.trim()) {
-              previewText.textContent = finalTranscript;
-              // Enviar frase final
-              client.publish(MQTT_TOPIC, JSON.stringify({
-                type: 'final',
-                sender: currentSender,
-                color: currentColor,
-                text: finalTranscript
-              }));
-            }
+            // Enviar texto en tiempo real palabra por palabra
+            client.publish(MQTT_TOPIC, JSON.stringify({
+              type: 'interim',
+              id: currentUtteranceId,
+              sender: currentSender,
+              color: currentColor,
+              text: sentence
+            }));
+
+            resetSilenceTimer();
           };
 
           recognition.onerror = (event) => {
             console.warn("Speech recognition error:", event.error);
-            if (event.error === 'no-speech' && continuousSwitch.checked && isRecording) {
-              // Silencio normal en la mesa: no hacer nada, se reiniciará en onend
-            }
           };
 
           recognition.onend = () => {
+            clearTimeout(silenceTimeout);
+            if (currentSentence.trim()) {
+              client.publish(MQTT_TOPIC, JSON.stringify({
+                type: 'final',
+                id: currentUtteranceId,
+                sender: currentSender,
+                color: currentColor,
+                text: currentSentence.trim()
+              }));
+              currentUtteranceId = 'utt_' + Date.now();
+              currentSentence = '';
+            }
+
             if (continuousSwitch.checked && isRecording) {
-              // Reinicio automático inmediato para modo manos libres
               try { recognition.start(); } catch(e) {}
             } else {
               isRecording = false;
@@ -780,10 +987,95 @@
         });
       }
 
-      // Limpiar pantalla
+      // ============================================================
+      // ENVÍO DE FOTOS Y VIDEOS
+      // ============================================================
+      btnSendPhoto.addEventListener('click', () => {
+        photoInput.click();
+      });
+
+      photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        previewText.textContent = "Cargando foto...";
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Redimensionar al vuelo a máx 1280x720 para viajar en <100ms
+            const canvas = document.createElement('canvas');
+            const maxDim = 1280;
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedData = canvas.toDataURL('image/jpeg', 0.75);
+
+            client.publish(MQTT_TOPIC, JSON.stringify({
+              type: 'photo',
+              sender: currentSender,
+              color: currentColor,
+              image: compressedData,
+              caption: `Foto enviada por ${currentSender}`
+            }));
+
+            previewText.textContent = "✅ ¡Foto enviada a la TV!";
+            btnCloseMediaWrap.style.display = 'block';
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+        // Reset del input para permitir enviar la misma foto si se desea
+        photoInput.value = '';
+      });
+
+      btnSendVideo.addEventListener('click', () => {
+        const input = prompt("Pegá el enlace de un video de YouTube para la abuela:\n(Ej: https://youtu.be/... o el ID del video)");
+        if (!input || !input.trim()) return;
+
+        let videoId = input.trim();
+        const urlMatch = input.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (urlMatch) {
+          videoId = urlMatch[1];
+        }
+
+        client.publish(MQTT_TOPIC, JSON.stringify({
+          type: 'video',
+          sender: currentSender,
+          color: currentColor,
+          videoId: videoId
+        }));
+
+        previewText.textContent = "✅ Video enviado a la TV";
+        btnCloseMediaWrap.style.display = 'block';
+      });
+
+      btnCloseMedia.addEventListener('click', () => {
+        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'close_media' }));
+        btnCloseMediaWrap.style.display = 'none';
+        previewText.textContent = "Foto/Video cerrado en la TV.";
+      });
+
+      // Limpiar pantalla de TV
       document.getElementById('btn-clear-tv').addEventListener('click', () => {
         client.publish(MQTT_TOPIC, JSON.stringify({ type: 'clear' }));
         previewText.textContent = "Pantalla de TV limpiada.";
+        btnCloseMediaWrap.style.display = 'none';
       });
 
       // Escribir texto a mano
