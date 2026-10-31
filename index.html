@@ -573,10 +573,10 @@
     <div class="continuous-toggle-card">
       <div class="continuous-text">
         <strong>Modo Manos Libres (Mesa)</strong>
-        <small>Dejá el celular apoyado y escucha siempre</small>
+        <small id="continuous-hint" style="color: #38BDF8;">Recomendado apagado en celular: Tocar para hablar (100% silencioso y sin cortes)</small>
       </div>
       <label class="switch">
-        <input type="checkbox" id="continuous-switch" checked>
+        <input type="checkbox" id="continuous-switch">
         <span class="slider"></span>
       </label>
     </div>
@@ -909,6 +909,19 @@
         }, 1500);
       }
 
+      let restartTimer = null;
+
+      continuousSwitch.addEventListener('change', () => {
+        const hint = document.getElementById('continuous-hint');
+        if (continuousSwitch.checked) {
+          hint.textContent = "⚠️ Modo continuo: Android emitirá un sonido cada vez que Google reactive el micrófono";
+          hint.style.color = "#F59E0B";
+        } else {
+          hint.textContent = "Recomendado apagado en celular: Tocar para hablar (100% silencioso y sin cortes)";
+          hint.style.color = "#38BDF8";
+        }
+      });
+
       // Reconocimiento de Voz Web Speech API
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -973,8 +986,12 @@
             lastCommittedText = '';
 
             if (continuousSwitch.checked && isRecording) {
-              // Solo se reinicia si Android corta la sesión por inactividad prolongada (timeout nativo)
-              try { recognition.start(); } catch(e) {}
+              clearTimeout(restartTimer);
+              restartTimer = setTimeout(() => {
+                if (continuousSwitch.checked && isRecording) {
+                  try { recognition.start(); } catch(e) {}
+                }
+              }, 1200);
             } else {
               isRecording = false;
               micBtn.classList.remove('recording');
@@ -990,10 +1007,14 @@
 
         micBtn.addEventListener('click', () => {
           if (!isRecording) {
+            lastPublishedFinal = '';
+            lastCommittedText = '';
+            currentSentenceText = '';
             initRecognition();
             try { recognition.start(); } catch(e) {}
           } else {
             isRecording = false;
+            commitSentence();
             try { recognition.stop(); } catch(e) {}
           }
         });
