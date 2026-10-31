@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Subtítulos para la Abuela</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #000000;
+      color: #FFFFFF;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================ */
+    /* VISTA DE LA TELEVISIÓN                                       */
+    /* ============================================================ */
+    #tv-view {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      background: #000000;
+      padding: 2.5vw 3.5vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Barra superior de la TV */
+    .tv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.5vh;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+      flex-shrink: 0;
+    }
+    .tv-clock {
+      font-size: 2.8vw;
+      font-weight: 800;
+      color: #94A3B8;
+      letter-spacing: 1px;
+    }
+    .tv-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.8vw;
+      font-weight: 600;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .tv-status-dot {
+      width: 16px;
+      height: 16px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 16px #10B981;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Caja QR en la TV */
+    .tv-qr-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .tv-qr-box .qr-img-wrap {
+      background: #FFFFFF;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+    }
+    .tv-qr-box span {
+      font-size: 1.2vw;
+      color: #CBD5E1;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    /* Contenedor principal de mensajes */
+    .tv-messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 2.5vh;
+      padding: 3vh 0;
+      overflow: hidden;
+    }
+
+    /* Mensajes archivados anteriores */
+    .tv-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0.45;
+      transition: all 0.4s ease;
+    }
+    .tv-msg:last-of-type {
+      opacity: 1;
+    }
+    .tv-speaker-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 2vw;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .tv-text {
+      font-size: clamp(2.8rem, 5.2vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      word-break: break-word;
+    }
+
+    /* Burbuja en vivo (mientras la persona habla) */
+    .tv-live-bubble {
+      display: none;
+      background: rgba(255, 230, 0, 0.08);
+      border-left: 8px solid #FFE600;
+      padding: 1.5vh 2.5vw;
+      border-radius: 0 20px 20px 0;
+      animation: fadeIn 0.3s ease;
+    }
+    .tv-live-bubble .tv-speaker-tag {
+      color: #FFE600;
+      margin-bottom: 8px;
+    }
+    .tv-live-text {
+      font-size: clamp(3.2rem, 5.8vw, 6.2rem);
+      font-weight: 900;
+      color: #FFE600;
+      line-height: 1.15;
+    }
+
+    /* Estado de espera (cuando nadie habla) */
+    .tv-idle {
+      margin: auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      animation: fadeIn 1s ease;
+    }
+    .tv-idle-icon {
+      font-size: 6vw;
+      animation: float-icon 3s ease-in-out infinite;
+    }
+    @keyframes float-icon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .tv-idle-title {
+      font-size: 4vw;
+      font-weight: 900;
+      color: #F8FAFC;
+    }
+    .tv-idle-sub {
+      font-size: 2.2vw;
+      color: #94A3B8;
+      max-width: 65vw;
+      line-height: 1.4;
+    }
+
+    /* ============================================================ */
+    /* VISTA DEL CELULAR (MICRÓFONO)                                */
+    /* ============================================================ */
+    #mic-view {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      background: #0B0F19;
+      padding: 20px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .mic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .mic-brand {
+      font-weight: 900;
+      font-size: 1.25rem;
+      color: #F8FAFC;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mic-status-pill {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Selector de persona */
+    .speaker-selector-card {
+      background: #151D2F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+    .speaker-selector-card label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: #94A3B8;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .speaker-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .speaker-chip {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: #1E293B;
+      color: #CBD5E1;
+      border: 2px solid transparent;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .speaker-chip.active {
+      background: #2563EB;
+      color: #FFFFFF;
+      border-color: #60A5FA;
+    }
+    .custom-name-input {
+      width: 100%;
+      background: #0B0F19;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: #FFFFFF;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .custom-name-input:focus {
+      border-color: #3B82F6;
+    }
+
+    /* Botón gigante de hablar */
+    .mic-button-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .big-mic-btn {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: #FFFFFF;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .big-mic-btn:active {
+      transform: scale(0.94);
+    }
+    .big-mic-btn svg {
+      width: 58px;
+      height: 58px;
+      fill: currentColor;
+    }
+    .big-mic-btn span {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* Estado grabando */
+    .big-mic-btn.recording {
+      background: linear-gradient(135deg, #EF4444, #DC2626);
+      box-shadow: 0 0 45px rgba(239, 68, 68, 0.6);
+      animation: pulse-recording 1.6s infinite;
+    }
+    @keyframes pulse-recording {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(239, 68, 68, 0.8); }
+    }
+
+    /* Switch de modo continuo */
+    .continuous-toggle-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #151D2F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+    .continuous-text strong {
+      display: block;
+      font-size: 0.95rem;
+      color: #F8FAFC;
+    }
+    .continuous-text small {
+      font-size: 0.8rem;
+      color: #94A3B8;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px; width: 22px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #10B981; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Previsualización en el celu */
+    .preview-box {
+      background: #151D2F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+      min-height: 80px;
+    }
+    .preview-box label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: #94A3B8;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .preview-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #FFE600;
+      min-height: 28px;
+    }
+
+    /* Botones de acción inferior */
+    .mic-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #1E293B;
+      color: #E2E8F0;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-secondary:active { background: #334155; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- VISTA TV                                                     -->
+  <!-- ============================================================ -->
+  <div id="tv-view">
+    <header class="tv-header">
+      <div class="tv-clock" id="tv-clock">--:--</div>
+      <div class="tv-status">
+        <div class="tv-status-dot"></div>
+        <span id="tv-status-text">Listo para escuchar</span>
+      </div>
+      <div class="tv-qr-box">
+        <div class="qr-img-wrap" id="qrcode"></div>
+        <span>Escaneá con el celular<br>para hablar</span>
+      </div>
+    </header>
+
+    <main class="tv-messages" id="tv-messages">
+      <div class="tv-idle" id="tv-idle">
+        <div class="tv-idle-icon">👵💬</div>
+        <h1 class="tv-idle-title">Subtítulos para la Abuela</h1>
+        <p class="tv-idle-sub">Cualquier familiar puede escanear el código QR con su celular y hablar normal. Lo que digas aparecerá acá en letra gigante al instante.</p>
+      </div>
+    </main>
+
+    <div class="tv-live-bubble" id="tv-live-bubble">
+      <div class="tv-speaker-tag" id="tv-live-speaker">🎙️ HABLANDO AHORA</div>
+      <div class="tv-live-text" id="tv-live-text">...</div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VISTA CELULAR                                                -->
+  <!-- ============================================================ -->
+  <div id="mic-view">
+    <header class="mic-header">
+      <div class="mic-brand">
+        <span>👵</span> Subtítulos Abuela
+      </div>
+      <div class="mic-status-pill" id="mic-status">Conectado a la TV</div>
+    </header>
+
+    <!-- Selector de persona -->
+    <div class="speaker-selector-card">
+      <label>¿Quién está hablando?</label>
+      <div class="speaker-chips" id="speaker-chips">
+        <button type="button" class="speaker-chip active" data-name="Víctor" data-color="#38BDF8">Víctor</button>
+        <button type="button" class="speaker-chip" data-name="Nieto" data-color="#4ADE80">Nieto</button>
+        <button type="button" class="speaker-chip" data-name="Hijo" data-color="#F472B6">Hijo</button>
+        <button type="button" class="speaker-chip" data-name="Mamá" data-color="#FB923C">Mamá</button>
+        <button type="button" class="speaker-chip" data-name="Familia" data-color="#A78BFA">Familia</button>
+      </div>
+      <input type="text" id="custom-name" class="custom-name-input" placeholder="O escribe tu nombre aquí..." value="Víctor">
+    </div>
+
+    <!-- Switch modo continuo -->
+    <div class="continuous-toggle-card">
+      <div class="continuous-text">
+        <strong>Modo Manos Libres (Mesa)</strong>
+        <small>Dejá el celular apoyado y escucha siempre</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="continuous-switch" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Botón gigante -->
+    <div class="mic-button-zone">
+      <button type="button" class="big-mic-btn" id="mic-btn">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+        <span id="mic-btn-label">TOCA PARA HABLAR</span>
+      </button>
+    </div>
+
+    <!-- Preview de lo que se dijo -->
+    <div class="preview-box">
+      <label>Lo que tu celular está escuchando:</label>
+      <div class="preview-text" id="preview-text">Toca el botón y di algo...</div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="mic-actions">
+      <button type="button" class="btn-secondary" id="btn-clear-tv">🧹 Limpiar pantalla TV</button>
+      <button type="button" class="btn-secondary" id="btn-send-text">⌨️ Escribir texto</button>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURACIÓN MQTT Y PARÁMETROS
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room') || 'abuela-victor';
+    const isTVParam = urlParams.get('mode') === 'tv';
+    const isMicParam = urlParams.get('mode') === 'mic';
+
+    // Detección automática si no se especificó modo
+    const isTV = isTVParam || (!isMicParam && (
+      window.innerWidth >= 1200 || 
+      /Android TV|Large Screen|SmartTV|CrKey|AFT/i.test(navigator.userAgent)
+    ));
+
+    const MQTT_BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+    const MQTT_TOPIC = `teleabuela/${room}/subtitulos`;
+    const clientId = 'sub_' + Math.random().toString(16).substring(2, 10);
+    const client = mqtt.connect(MQTT_BROKER, { clientId });
+
+    // ============================================================
+    // LÓGICA DE LA TELEVISIÓN
+    // ============================================================
+    if (isTV) {
+      document.getElementById('tv-view').style.display = 'flex';
+      
+      // Reloj en vivo
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('tv-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // Generar código QR para conectar celulares a este mismo link en modo mic
+      const micUrl = window.location.origin + window.location.pathname + `?mode=mic&room=${room}`;
+      new QRCode(document.getElementById("qrcode"), {
+        text: micUrl,
+        width: 80,
+        height: 80,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+
+      const tvMessages = document.getElementById('tv-messages');
+      const tvIdle = document.getElementById('tv-idle');
+      const tvLiveBubble = document.getElementById('tv-live-bubble');
+      const tvLiveSpeaker = document.getElementById('tv-live-speaker');
+      const tvLiveText = document.getElementById('tv-live-text');
+      const tvStatusText = document.getElementById('tv-status-text');
+
+      client.on('connect', () => {
+        client.subscribe(MQTT_TOPIC);
+        tvStatusText.textContent = "Conectado y listo";
+      });
+
+      let idleTimeout;
+      function resetIdle() {
+        if (tvIdle) tvIdle.style.display = 'none';
+        clearTimeout(idleTimeout);
+        idleTimeout = setTimeout(() => {
+          // Si pasan 60s sin hablar, no borramos los últimos mensajes pero dejamos la pantalla calmada
+        }, 60000);
+      }
+
+      client.on('message', (topic, payload) => {
+        try {
+          const data = JSON.parse(payload.toString());
+          resetIdle();
+
+          if (data.type === 'interim') {
+            // Texto en tiempo real mientras la persona habla
+            tvLiveBubble.style.display = 'block';
+            tvLiveSpeaker.textContent = `🎙️ ${data.sender} ESTÁ HABLANDO...`;
+            tvLiveSpeaker.style.color = data.color || '#FFE600';
+            tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
+            tvLiveText.textContent = data.text;
+          } 
+          else if (data.type === 'final') {
+            // Frase completada: se oculta la burbuja en vivo y se agrega al historial
+            tvLiveBubble.style.display = 'none';
+
+            const msgEl = document.createElement('div');
+            msgEl.className = 'tv-msg';
+            msgEl.innerHTML = `
+              <div class="tv-speaker-tag" style="color: ${data.color || '#38BDF8'}">
+                <span>●</span> ${data.sender}
+              </div>
+              <div class="tv-text">${data.text}</div>
+            `;
+            tvMessages.appendChild(msgEl);
+
+            // Mantener solo los últimos 3 mensajes para no saturar
+            while (tvMessages.children.length > 4) {
+              if (tvMessages.children[0] !== tvIdle) {
+                tvMessages.removeChild(tvMessages.children[0]);
+              } else {
+                tvMessages.removeChild(tvMessages.children[1]);
+              }
+            }
+          }
+          else if (data.type === 'clear') {
+            // Limpiar pantalla
+            while (tvMessages.firstChild) {
+              tvMessages.removeChild(tvMessages.firstChild);
+            }
+            if (tvIdle) {
+              tvMessages.appendChild(tvIdle);
+              tvIdle.style.display = 'flex';
+            }
+            tvLiveBubble.style.display = 'none';
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+
+    // ============================================================
+    // LÓGICA DEL CELULAR (MICRÓFONO)
+    // ============================================================
+    else {
+      document.getElementById('mic-view').style.display = 'flex';
+
+      const micBtn = document.getElementById('mic-btn');
+      const micBtnLabel = document.getElementById('mic-btn-label');
+      const previewText = document.getElementById('preview-text');
+      const micStatus = document.getElementById('mic-status');
+      const continuousSwitch = document.getElementById('continuous-switch');
+      const customNameInput = document.getElementById('custom-name');
+      const chips = document.querySelectorAll('.speaker-chip');
+
+      let currentSender = "Víctor";
+      let currentColor = "#38BDF8";
+      let isRecording = false;
+      let recognition = null;
+      let wakeLock = null;
+
+      // Selección de persona
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          currentSender = chip.dataset.name;
+          currentColor = chip.dataset.color;
+          customNameInput.value = currentSender;
+        });
+      });
+
+      customNameInput.addEventListener('input', () => {
+        currentSender = customNameInput.value || "Familia";
+      });
+
+      client.on('connect', () => {
+        micStatus.textContent = "Conectado a la TV";
+      });
+
+      // Solicitar WakeLock para que el celular no se apague en la mesa
+      async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+          try {
+            wakeLock = await navigator.wakeLock.request('screen');
+          } catch (err) {}
+        }
+      }
+
+      // Reconocimiento de Voz Web Speech API (Nativo de Google en Android)
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        previewText.textContent = "⚠️ Tu navegador no soporta Web Speech API. Usa Google Chrome en Android.";
+      } else {
+        function initRecognition() {
+          recognition = new SpeechRecognition();
+          recognition.lang = 'es-MX'; // Español de México
+          recognition.continuous = continuousSwitch.checked;
+          recognition.interimResults = true;
+
+          recognition.onstart = () => {
+            isRecording = true;
+            micBtn.classList.add('recording');
+            micBtnLabel.textContent = "ESCUCHANDO...";
+            previewText.textContent = "Habla ahora...";
+            requestWakeLock();
+          };
+
+          recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+              } else {
+                interimTranscript += event.results[i][0].transcript;
+              }
+            }
+
+            if (interimTranscript.trim()) {
+              previewText.textContent = interimTranscript;
+              // Enviar texto en tiempo real palabra por palabra
+              client.publish(MQTT_TOPIC, JSON.stringify({
+                type: 'interim',
+                sender: currentSender,
+                color: currentColor,
+                text: interimTranscript
+              }));
+            }
+
+            if (finalTranscript.trim()) {
+              previewText.textContent = finalTranscript;
+              // Enviar frase final
+              client.publish(MQTT_TOPIC, JSON.stringify({
+                type: 'final',
+                sender: currentSender,
+                color: currentColor,
+                text: finalTranscript
+              }));
+            }
+          };
+
+          recognition.onerror = (event) => {
+            console.warn("Speech recognition error:", event.error);
+            if (event.error === 'no-speech' && continuousSwitch.checked && isRecording) {
+              // Silencio normal en la mesa: no hacer nada, se reiniciará en onend
+            }
+          };
+
+          recognition.onend = () => {
+            if (continuousSwitch.checked && isRecording) {
+              // Reinicio automático inmediato para modo manos libres
+              try { recognition.start(); } catch(e) {}
+            } else {
+              isRecording = false;
+              micBtn.classList.remove('recording');
+              micBtnLabel.textContent = "TOCA PARA HABLAR";
+              if (wakeLock) {
+                wakeLock.release().then(() => wakeLock = null);
+              }
+            }
+          };
+        }
+
+        initRecognition();
+
+        micBtn.addEventListener('click', () => {
+          if (!isRecording) {
+            initRecognition();
+            try { recognition.start(); } catch(e) {}
+          } else {
+            isRecording = false;
+            try { recognition.stop(); } catch(e) {}
+          }
+        });
+      }
+
+      // Limpiar pantalla
+      document.getElementById('btn-clear-tv').addEventListener('click', () => {
+        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'clear' }));
+        previewText.textContent = "Pantalla de TV limpiada.";
+      });
+
+      // Escribir texto a mano
+      document.getElementById('btn-send-text').addEventListener('click', () => {
+        const text = prompt("Escribe lo que quieres mostrarle a la abuela:");
+        if (text && text.trim()) {
+          client.publish(MQTT_TOPIC, JSON.stringify({
+            type: 'final',
+            sender: currentSender,
+            color: currentColor,
+            text: text.trim()
+          }));
+          previewText.textContent = text.trim();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
