@@ -541,6 +541,7 @@
     const MQTT_TOPIC = `teleabuela/${room}/subtitulos`;
     const clientId = 'sub_' + Math.random().toString(16).substring(2, 10);
     const client = mqtt.connect(MQTT_BROKER, { clientId });
+    window.client = client;
 
     // ============================================================
     // LÓGICA DE LA TELEVISIÓN
