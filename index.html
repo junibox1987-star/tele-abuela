@@ -258,6 +258,12 @@
       background: transparent !important;
       background-color: transparent !important;
     }
+    body.mode-overlay.has-media,
+    body.mode-overlay.has-media #tv-view {
+      background: #000000 !important;
+      background-color: #000000 !important;
+    }
+
     body.mode-overlay .tv-header,
     body.mode-overlay .tv-idle,
     body.mode-overlay .tv-messages,
@@ -268,25 +274,27 @@
     .tv-overlay-banner {
       display: none;
       position: fixed;
-      left: 4vw;
-      right: 4vw;
-      bottom: 4vh;
+      left: 3vw;
+      right: 3vw;
+      bottom: 3.5vh;
       z-index: 99999;
-      background: rgba(11, 15, 25, 0.94);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 2.5px solid rgba(56, 189, 248, 0.5);
-      border-radius: 28px;
-      padding: 2.2vh 3.5vw;
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.2);
+      background: rgba(8, 12, 20, 0.96);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 2px solid rgba(56, 189, 248, 0.45);
+      border-radius: 24px;
+      padding: 1.8vh 3vw;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.15);
       opacity: 0;
-      transform: translateY(35px);
-      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+      transform: translateY(30px);
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
       pointer-events: none;
     }
 
     body.mode-overlay .tv-overlay-banner {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .tv-overlay-banner.visible {
@@ -295,63 +303,94 @@
     }
 
     .tv-overlay-banner.interim {
-      border-color: rgba(255, 230, 0, 0.75);
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 230, 0, 0.25);
+      border-color: rgba(255, 230, 0, 0.85);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 230, 0, 0.25);
     }
 
-    .tv-overlay-banner .tv-speaker-tag {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: clamp(1.4rem, 2.2vw, 2.4rem);
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    .tv-overlay-banner .tv-overlay-text {
-      font-size: clamp(2.8rem, 5.2vw, 5.5rem);
-      font-weight: 900;
-      line-height: 1.18;
-      color: #FFFFFF;
-      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0,0,0,1);
+    /* Frase anterior leída: atenuada en gris suave para el ojo único */
+    .tv-overlay-prev {
+      display: none;
+      font-size: clamp(1.8rem, 3.2vw, 3.4rem);
+      font-weight: 700;
+      line-height: 1.22;
+      color: #94A3B8;
+      opacity: 0.82;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 6px;
+      margin-bottom: 2px;
       word-break: break-word;
     }
 
-    /* Overlay de Medios en la TV (Fotos y Videos) */
+    .tv-overlay-curr-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tv-overlay-speaker {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+
+    /* Frase nueva abajo: letra gigante blanca brillante */
+    .tv-overlay-text {
+      font-size: clamp(2.8rem, 5.2vw, 5.6rem);
+      font-weight: 900;
+      line-height: 1.16;
+      color: #FFFFFF;
+      text-shadow: 0 3px 14px rgba(0, 0, 0, 0.98), 0 1px 3px rgba(0, 0, 0, 1);
+      word-break: break-word;
+    }
+
+    .tv-overlay-banner.interim .tv-overlay-text {
+      color: #FFE600;
+      text-shadow: 0 3px 14px rgba(0, 0, 0, 0.98), 0 0 20px rgba(255, 230, 0, 0.35);
+    }
+
+    /* Overlay de Medios en la TV (Fotos y Videos) - Cero transparencia y fotos más grandes */
     .tv-media-overlay {
       display: none;
-      position: absolute;
+      position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 100;
+      background: #000000 !important;
+      background-color: #000000 !important;
+      z-index: 999999;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3vh 4vw;
+      padding: 1.5vh 2vw;
       animation: fadeIn 0.3s ease;
     }
     .tv-media-badge {
       position: absolute;
-      top: 3vh; left: 4vw;
-      font-size: 1.8vw;
+      top: 2vh; left: 3vw;
+      font-size: 1.6vw;
       font-weight: 800;
-      background: rgba(30, 41, 59, 0.9);
-      padding: 8px 24px;
+      background: rgba(20, 25, 35, 0.95);
+      padding: 6px 20px;
       border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       color: #F8FAFC;
+      z-index: 10;
     }
     .tv-media-img {
-      max-height: 75vh;
-      max-width: 90vw;
-      border-radius: 20px;
-      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85);
+      max-height: 92vh;
+      max-width: 96vw;
+      width: auto;
+      height: auto;
+      border-radius: 14px;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 1);
       object-fit: contain;
       display: none;
     }
@@ -670,12 +709,13 @@
       <div class="tv-live-text" id="tv-live-text">...</div>
     </div>
 
-    <!-- Franja Flotante Centinela para Modo Overlay -->
+    <!-- Franja Flotante Centinela para Modo Overlay (Opción 1: Nuevo abajo, Anterior arriba en gris) -->
     <div class="tv-overlay-banner" id="tv-overlay-banner">
-      <div class="tv-speaker-tag" id="tv-overlay-speaker">
-        <span>●</span> HABLANDO
+      <div class="tv-overlay-prev" id="tv-overlay-prev"></div>
+      <div class="tv-overlay-curr-wrap">
+        <div class="tv-overlay-speaker" id="tv-overlay-speaker"></div>
+        <div class="tv-overlay-text" id="tv-overlay-text">...</div>
       </div>
-      <div class="tv-overlay-text" id="tv-overlay-text">...</div>
     </div>
 
     <!-- Overlay de Fotos y Videos en TV -->
@@ -716,17 +756,17 @@
       <a href="./HablarAbuela.apk" download style="background:#38BDF8; color:#0B0F19; font-weight:800; font-size:0.8rem; text-decoration:none; padding:8px 14px; border-radius:20px; white-space:nowrap; box-shadow: 0 2px 10px rgba(56,189,248,0.3);">Instalar App</a>
     </div>
 
-    <!-- Selector de persona -->
+    <!-- Selector de persona (Opcional) -->
     <div class="speaker-selector-card">
-      <label>¿Quién está hablando?</label>
+      <label>¿Quién habla? (Opcional)</label>
       <div class="speaker-chips" id="speaker-chips">
-        <button type="button" class="speaker-chip active" data-name="Víctor" data-color="#38BDF8">Víctor</button>
-        <button type="button" class="speaker-chip" data-name="Nieto" data-color="#4ADE80">Nieto</button>
-        <button type="button" class="speaker-chip" data-name="Hijo" data-color="#F472B6">Hijo</button>
+        <button type="button" class="speaker-chip active" data-name="" data-color="#38BDF8">Sin nombre</button>
+        <button type="button" class="speaker-chip" data-name="Nieto/a" data-color="#4ADE80">Nieto/a</button>
+        <button type="button" class="speaker-chip" data-name="Hijo/a" data-color="#F472B6">Hijo/a</button>
         <button type="button" class="speaker-chip" data-name="Mamá" data-color="#FB923C">Mamá</button>
         <button type="button" class="speaker-chip" data-name="Familia" data-color="#A78BFA">Familia</button>
       </div>
-      <input type="text" id="custom-name" class="custom-name-input" placeholder="O escribe tu nombre aquí..." value="Víctor">
+      <input type="text" id="custom-name" class="custom-name-input" placeholder="O escribe tu nombre si quieres (opcional)" value="">
     </div>
 
     <!-- Indicador de modo Tocar para Hablar -->
@@ -874,27 +914,52 @@
       const tvMediaSubtitles = document.getElementById('tv-media-subtitles');
 
       const tvOverlayBanner = document.getElementById('tv-overlay-banner');
+      const tvOverlayPrev = document.getElementById('tv-overlay-prev');
       const tvOverlaySpeaker = document.getElementById('tv-overlay-speaker');
       const tvOverlayText = document.getElementById('tv-overlay-text');
       let overlayTimer = null;
+      let lastFinalPhrase = "";
 
       function updateOverlaySubtitle(sender, text, color, isInterim) {
         if (!tvOverlayBanner) return;
         clearTimeout(overlayTimer);
         tvOverlayBanner.classList.add('visible');
+
+        // Nombre opcional: SOLO si fue configurado por la persona
+        const hasCustomName = sender && sender.trim() !== '' && sender.toLowerCase() !== 'sin nombre';
+        if (hasCustomName) {
+          tvOverlaySpeaker.style.display = 'inline-flex';
+          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#38BDF8'}">● ${sender}</span>`;
+        } else {
+          tvOverlaySpeaker.style.display = 'none';
+          tvOverlaySpeaker.innerHTML = '';
+        }
+
+        // Opción 1 para la abuela de 98 años (un solo ojo):
+        // Lo que ya leyó se mantiene arriba en gris suave; la frase nueva entra abajo brillante
+        if (lastFinalPhrase && lastFinalPhrase.toLowerCase() !== text.toLowerCase()) {
+          tvOverlayPrev.style.display = 'block';
+          tvOverlayPrev.textContent = lastFinalPhrase;
+        } else if (!lastFinalPhrase) {
+          tvOverlayPrev.style.display = 'none';
+        }
+
         if (isInterim) {
           tvOverlayBanner.classList.add('interim');
-          tvOverlaySpeaker.innerHTML = `<span style="color:#FFE600">🎙️</span> <span style="color:${color || '#FFE600'}">${sender.toUpperCase()} ESTÁ HABLANDO...</span>`;
         } else {
           tvOverlayBanner.classList.remove('interim');
-          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#38BDF8'}">●</span> <span style="color:${color || '#38BDF8'}">${sender.toUpperCase()}</span>`;
+          lastFinalPhrase = text;
         }
+
         tvOverlayText.textContent = text;
 
-        const hideDelay = isInterim ? 7000 : 16000;
+        // 25 segundos para lectura tranquila sin apuro
+        const hideDelay = isInterim ? 10000 : 25000;
         overlayTimer = setTimeout(() => {
           tvOverlayBanner.classList.remove('visible');
           tvOverlayBanner.classList.remove('interim');
+          lastFinalPhrase = "";
+          if (tvOverlayPrev) tvOverlayPrev.style.display = 'none';
         }, hideDelay);
       }
 
@@ -959,8 +1024,14 @@
             // Texto en tiempo real mientras la persona habla
             const liveText = stripDuplicateHalves((data.text || '').trim());
             tvLiveBubble.style.display = 'block';
-            tvLiveSpeaker.textContent = `🎙️ ${data.sender} ESTÁ HABLANDO...`;
-            tvLiveSpeaker.style.color = data.color || '#FFE600';
+            const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
+            if (hasSender) {
+              tvLiveSpeaker.style.display = 'block';
+              tvLiveSpeaker.textContent = `🎙️ ${data.sender} ESTÁ HABLANDO...`;
+              tvLiveSpeaker.style.color = data.color || '#FFE600';
+            } else {
+              tvLiveSpeaker.style.display = 'none';
+            }
             tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
             tvLiveText.textContent = liveText;
             showMediaSubtitle(data.sender, liveText, data.color);
@@ -982,8 +1053,6 @@
             }
 
             // DEDUPLICACIÓN INTELIGENTE:
-            // Si el mensaje anterior es del mismo remitente y el nuevo texto expande el anterior
-            // o fue enviado hace menos de 2.5s como parte de la misma idea:
             const isContinuation = lastMessageEl && lastSender === data.sender && (
               text.toLowerCase().startsWith(lastText.toLowerCase()) ||
               lastText.toLowerCase().startsWith(text.toLowerCase()) ||
@@ -991,18 +1060,19 @@
             );
 
             if (isContinuation) {
-              // Actualizamos el mensaje existente en lugar de crear un clon duplicado
               lastMessageEl.querySelector('.tv-text').textContent = text;
               lastText = text;
               lastMsgTime = now;
             } else {
-              // Frase nueva genuina
               const msgEl = document.createElement('div');
               msgEl.className = 'tv-msg';
-              msgEl.innerHTML = `
+              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
+              const speakerTagHtml = hasSender ? `
                 <div class="tv-speaker-tag" style="color: ${data.color || '#38BDF8'}">
                   <span>●</span> ${data.sender}
-                </div>
+                </div>` : '';
+              msgEl.innerHTML = `
+                ${speakerTagHtml}
                 <div class="tv-text">${text}</div>
               `;
               tvMessages.appendChild(msgEl);
@@ -1014,16 +1084,19 @@
             }
           }
           else if (data.type === 'photo') {
+            document.body.classList.add('has-media');
             tvMediaOverlay.style.display = 'flex';
             tvMediaVideoWrap.style.display = 'none';
             tvMediaIframe.src = '';
             tvMediaImg.style.display = 'block';
             tvMediaImg.src = data.image;
             tvMediaIcon.textContent = '📷';
-            tvMediaSender.textContent = data.caption || `Foto de ${data.sender}`;
+            const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
+            tvMediaSender.textContent = data.caption || (hasSender ? `Foto de ${data.sender}` : 'Foto para la abuela');
             tvMediaSender.style.color = data.color || '#38BDF8';
           }
           else if (data.type === 'video') {
+            document.body.classList.add('has-media');
             tvMediaOverlay.style.display = 'flex';
             tvMediaImg.style.display = 'none';
             tvMediaImg.src = '';
@@ -1039,7 +1112,8 @@
               tvMediaIframe.style.display = 'block';
               tvMediaIframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0`;
               tvMediaIcon.textContent = '🎥';
-              tvMediaSender.textContent = `Video de YouTube enviado por ${data.sender}`;
+              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
+              tvMediaSender.textContent = hasSender ? `Video de YouTube enviado por ${data.sender}` : 'Video de YouTube para la abuela';
             } else if (data.videoUrl) {
               // Video directo MP4/WebM
               tvMediaIframe.style.display = 'none';
@@ -1050,11 +1124,13 @@
                 tvMediaVideo.play().catch(e => console.log('Autoplay:', e));
               }
               tvMediaIcon.textContent = '🎬';
-              tvMediaSender.textContent = `Video enviado por ${data.sender}`;
+              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
+              tvMediaSender.textContent = hasSender ? `Video enviado por ${data.sender}` : 'Video para la abuela';
             }
             tvMediaSender.style.color = data.color || '#C084FC';
           }
           else if (data.type === 'close_media') {
+            document.body.classList.remove('has-media');
             tvMediaOverlay.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaIframe.src = '';
@@ -1067,10 +1143,13 @@
           }
           else if (data.type === 'clear') {
             // Limpiar pantalla
+            document.body.classList.remove('has-media');
             if (tvOverlayBanner) {
               clearTimeout(overlayTimer);
               tvOverlayBanner.classList.remove('visible');
               tvOverlayBanner.classList.remove('interim');
+              lastFinalPhrase = "";
+              if (tvOverlayPrev) tvOverlayPrev.style.display = 'none';
             }
             while (tvMessages.firstChild) {
               tvMessages.removeChild(tvMessages.firstChild);
@@ -1118,8 +1197,8 @@
       const btnCloseMedia = document.getElementById('btn-close-media');
       const btnCloseMediaWrap = document.getElementById('btn-close-media-wrap');
 
-      let currentSender = "Víctor";
-      let currentColor = "#38BDF8";
+      let currentSender = localStorage.getItem('teleabuela_speaker_name') || "";
+      let currentColor = localStorage.getItem('teleabuela_speaker_color') || "#38BDF8";
       let isRecording = false;
       let recognition = null;
       let wakeLock = null;
@@ -1127,6 +1206,20 @@
       let currentUtteranceId = 'utt_' + Date.now();
       let currentSentenceText = '';
       let lastPublishedFinal = '';
+
+      // Restaurar selección previa si existe en este celular
+      if (currentSender) {
+        customNameInput.value = currentSender;
+        chips.forEach(c => {
+          if (c.dataset.name && c.dataset.name.toLowerCase() === currentSender.toLowerCase()) {
+            c.classList.add('active');
+          } else {
+            c.classList.remove('active');
+          }
+        });
+      } else {
+        customNameInput.value = "";
+      }
 
       function stripDuplicateHalves(str) {
         if (!str) return '';
@@ -1164,19 +1257,31 @@
         return stripDuplicateHalves(clean);
       }
 
-      // Selección de persona
+      // Selección de persona (opcional con memoria local)
       chips.forEach(chip => {
         chip.addEventListener('click', () => {
           chips.forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
-          currentSender = chip.dataset.name;
-          currentColor = chip.dataset.color;
+          currentSender = chip.dataset.name || "";
+          currentColor = chip.dataset.color || "#38BDF8";
           customNameInput.value = currentSender;
+          localStorage.setItem('teleabuela_speaker_name', currentSender);
+          localStorage.setItem('teleabuela_speaker_color', currentColor);
         });
       });
 
       customNameInput.addEventListener('input', () => {
-        currentSender = customNameInput.value || "Familia";
+        currentSender = (customNameInput.value || "").trim();
+        chips.forEach(c => {
+          if (c.dataset.name && c.dataset.name.toLowerCase() === currentSender.toLowerCase()) {
+            c.classList.add('active');
+          } else if (!currentSender && c.dataset.name === "") {
+            c.classList.add('active');
+          } else {
+            c.classList.remove('active');
+          }
+        });
+        localStorage.setItem('teleabuela_speaker_name', currentSender);
       });
 
       client.on('connect', () => {
@@ -1365,12 +1470,13 @@
 
             const compressedData = canvas.toDataURL('image/jpeg', 0.75);
 
+            const hasSender = currentSender && currentSender.trim() && currentSender.toLowerCase() !== 'sin nombre';
             client.publish(MQTT_TOPIC, JSON.stringify({
               type: 'photo',
-              sender: currentSender,
+              sender: currentSender || '',
               color: currentColor,
               image: compressedData,
-              caption: `Foto enviada por ${currentSender}`
+              caption: hasSender ? `Foto enviada por ${currentSender}` : 'Foto para la abuela'
             }));
 
             previewText.textContent = "✅ ¡Foto enviada a la TV!";
