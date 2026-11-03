@@ -569,16 +569,13 @@
       <input type="text" id="custom-name" class="custom-name-input" placeholder="O escribe tu nombre aquí..." value="Víctor">
     </div>
 
-    <!-- Switch modo continuo -->
-    <div class="continuous-toggle-card">
-      <div class="continuous-text">
-        <strong>Modo Manos Libres (Mesa)</strong>
-        <small id="continuous-hint" style="color: #38BDF8;">Recomendado apagado en celular: Tocar para hablar (100% silencioso y sin cortes)</small>
+    <!-- Indicador de modo Tocar para Hablar -->
+    <div class="mode-info-card" style="background:#151D2F; border:1px solid rgba(56,189,248,0.25); border-radius:14px; padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:1.6rem;">🎙️</span>
+      <div style="font-size:0.85rem; color:#94A3B8; line-height:1.35;">
+        <strong style="color:#F8FAFC; font-size:0.95rem;">Modo Tocar para Hablar (Estilo WhatsApp)</strong>
+        <span>Tocá el botón azul, decí tu frase y se manda sola a la tele sin ruidos ni cortes.</span>
       </div>
-      <label class="switch">
-        <input type="checkbox" id="continuous-switch">
-        <span class="slider"></span>
-      </label>
     </div>
 
     <!-- Botón gigante -->
@@ -589,6 +586,7 @@
           <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
         </svg>
         <span id="mic-btn-label">TOCA PARA HABLAR</span>
+        <small id="mic-btn-sub" style="font-size:0.65rem; opacity:0.8; margin-top:2px;">o mantené presionado</small>
       </button>
     </div>
 
@@ -710,6 +708,21 @@
         }
       }
 
+      function stripDuplicateHalves(str) {
+        if (!str) return '';
+        str = str.trim();
+        const words = str.split(/\s+/);
+        if (words.length >= 2 && words.length % 2 === 0) {
+          const half = words.length / 2;
+          const first = words.slice(0, half).join(' ').toLowerCase();
+          const second = words.slice(half).join(' ').toLowerCase();
+          if (first === second) {
+            return words.slice(0, half).join(' ');
+          }
+        }
+        return str;
+      }
+
       let lastMessageEl = null;
       let lastSender = '';
       let lastText = '';
@@ -722,23 +735,25 @@
 
           if (data.type === 'interim') {
             // Texto en tiempo real mientras la persona habla
+            const liveText = stripDuplicateHalves((data.text || '').trim());
             tvLiveBubble.style.display = 'block';
             tvLiveSpeaker.textContent = `🎙️ ${data.sender} ESTÁ HABLANDO...`;
             tvLiveSpeaker.style.color = data.color || '#FFE600';
             tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
-            tvLiveText.textContent = data.text;
-            showMediaSubtitle(data.sender, data.text, data.color);
+            tvLiveText.textContent = liveText;
+            showMediaSubtitle(data.sender, liveText, data.color);
           } 
           else if (data.type === 'final') {
             tvLiveBubble.style.display = 'none';
-            showMediaSubtitle(data.sender, data.text, data.color);
 
             const now = Date.now();
-            const text = (data.text || '').trim();
+            const text = stripDuplicateHalves((data.text || '').trim());
             if (!text) return;
 
+            showMediaSubtitle(data.sender, text, data.color);
+
             // Ignorar duplicados exactos si llegan repetidos por eventos concurrentes
-            if (lastMessageEl && lastSender === data.sender && text.toLowerCase() === lastText.toLowerCase() && (now - lastMsgTime < 4500)) {
+            if (lastMessageEl && lastSender === data.sender && text.toLowerCase() === lastText.toLowerCase() && (now - lastMsgTime < 5000)) {
               return;
             }
 
@@ -833,7 +848,7 @@
       const micBtnLabel = document.getElementById('mic-btn-label');
       const previewText = document.getElementById('preview-text');
       const micStatus = document.getElementById('mic-status');
-      const continuousSwitch = document.getElementById('continuous-switch');
+      const micBtnSub = document.getElementById('mic-btn-sub');
       const customNameInput = document.getElementById('custom-name');
       const chips = document.querySelectorAll('.speaker-chip');
 
@@ -850,10 +865,44 @@
       let wakeLock = null;
 
       let currentUtteranceId = 'utt_' + Date.now();
-      let lastCommittedText = '';
       let currentSentenceText = '';
-      let silenceTimeout = null;
       let lastPublishedFinal = '';
+
+      function stripDuplicateHalves(str) {
+        if (!str) return '';
+        str = str.trim();
+        const words = str.split(/\s+/);
+        if (words.length >= 2 && words.length % 2 === 0) {
+          const half = words.length / 2;
+          const first = words.slice(0, half).join(' ').toLowerCase();
+          const second = words.slice(half).join(' ').toLowerCase();
+          if (first === second) {
+            return words.slice(0, half).join(' ');
+          }
+        }
+        return str;
+      }
+
+      function extractCleanTranscript(results) {
+        let parts = [];
+        for (let i = 0; i < results.length; ++i) {
+          let t = (results[i][0].transcript || '').trim();
+          if (!t) continue;
+          if (parts.length > 0) {
+            let prev = parts[parts.length - 1];
+            if (t.toLowerCase() === prev.toLowerCase() || t.toLowerCase().startsWith(prev.toLowerCase())) {
+              parts[parts.length - 1] = t;
+              continue;
+            }
+            if (prev.toLowerCase().includes(t.toLowerCase())) {
+              continue;
+            }
+          }
+          parts.push(t);
+        }
+        let clean = parts.join(' ').trim();
+        return stripDuplicateHalves(clean);
+      }
 
       // Selección de persona
       chips.forEach(chip => {
@@ -884,8 +933,8 @@
       }
 
       function commitSentence() {
-        const textToCommit = currentSentenceText.trim();
-        if (textToCommit && textToCommit !== lastPublishedFinal) {
+        const textToCommit = stripDuplicateHalves(currentSentenceText.trim());
+        if (textToCommit && textToCommit.toLowerCase() !== lastPublishedFinal.toLowerCase()) {
           lastPublishedFinal = textToCommit;
           client.publish(MQTT_TOPIC, JSON.stringify({
             type: 'final',
@@ -895,32 +944,14 @@
             text: textToCommit
           }));
 
-          lastCommittedText = (lastCommittedText + ' ' + textToCommit).trim();
+          previewText.textContent = `✅ Enviado a la TV: "${textToCommit}"`;
           currentSentenceText = '';
           currentUtteranceId = 'utt_' + Date.now();
-          // OJO: ¡NUNCA llamar recognition.abort()! Mantener la sesión abierta para no activar el sonido de dictado de Android.
+          if (navigator.vibrate) {
+            try { navigator.vibrate([40, 60, 40]); } catch(e) {}
+          }
         }
       }
-
-      function resetSilenceTimer() {
-        clearTimeout(silenceTimeout);
-        silenceTimeout = setTimeout(() => {
-          commitSentence();
-        }, 1500);
-      }
-
-      let restartTimer = null;
-
-      continuousSwitch.addEventListener('change', () => {
-        const hint = document.getElementById('continuous-hint');
-        if (continuousSwitch.checked) {
-          hint.textContent = "⚠️ Modo continuo: Android emitirá un sonido cada vez que Google reactive el micrófono";
-          hint.style.color = "#F59E0B";
-        } else {
-          hint.textContent = "Recomendado apagado en celular: Tocar para hablar (100% silencioso y sin cortes)";
-          hint.style.color = "#38BDF8";
-        }
-      });
 
       // Reconocimiento de Voz Web Speech API
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -931,38 +962,27 @@
         function initRecognition() {
           recognition = new SpeechRecognition();
           recognition.lang = 'es-MX'; // Español de México
-          recognition.continuous = continuousSwitch.checked;
+          recognition.continuous = false; // Modo frase por frase: CERO pitidos en bucle y CERO cortes
           recognition.interimResults = true;
 
           recognition.onstart = () => {
             isRecording = true;
             micBtn.classList.add('recording');
             micBtnLabel.textContent = "ESCUCHANDO...";
-            previewText.textContent = "Habla ahora...";
+            if (micBtnSub) micBtnSub.textContent = "(Soltá o tocá para enviar)";
+            previewText.textContent = "Hablá ahora...";
             requestWakeLock();
+            if (navigator.vibrate) {
+              try { navigator.vibrate(50); } catch(e) {}
+            }
           };
 
           recognition.onresult = (event) => {
-            let fullTranscript = '';
-            for (let i = 0; i < event.results.length; ++i) {
-              fullTranscript += event.results[i][0].transcript + ' ';
-            }
-            fullTranscript = fullTranscript.trim();
-            if (!fullTranscript) return;
+            const cleanText = extractCleanTranscript(event.results);
+            if (!cleanText) return;
 
-            // Extraer solo las palabras nuevas después de lo que ya se consolidó en la frase anterior
-            let fresh = fullTranscript;
-            if (lastCommittedText && fresh.toLowerCase().startsWith(lastCommittedText.toLowerCase())) {
-              fresh = fresh.substring(lastCommittedText.length).trim();
-            } else if (lastCommittedText && !fresh.toLowerCase().includes(lastCommittedText.toLowerCase().substring(0, 15))) {
-              // El búfer nativo de Android se reseteó por silencio
-              lastCommittedText = '';
-            }
-
-            if (!fresh) return;
-
-            currentSentenceText = fresh;
-            previewText.textContent = fresh;
+            currentSentenceText = cleanText;
+            previewText.textContent = cleanText;
 
             // Enviar texto en tiempo real palabra por palabra a la TV
             client.publish(MQTT_TOPIC, JSON.stringify({
@@ -970,10 +990,8 @@
               id: currentUtteranceId,
               sender: currentSender,
               color: currentColor,
-              text: fresh
+              text: cleanText
             }));
-
-            resetSilenceTimer();
           };
 
           recognition.onerror = (event) => {
@@ -981,41 +999,69 @@
           };
 
           recognition.onend = () => {
-            clearTimeout(silenceTimeout);
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtnLabel.textContent = "TOCA PARA HABLAR";
+            if (micBtnSub) micBtnSub.textContent = "o mantené presionado";
             commitSentence();
-            lastCommittedText = '';
-
-            if (continuousSwitch.checked && isRecording) {
-              clearTimeout(restartTimer);
-              restartTimer = setTimeout(() => {
-                if (continuousSwitch.checked && isRecording) {
-                  try { recognition.start(); } catch(e) {}
-                }
-              }, 1200);
-            } else {
-              isRecording = false;
-              micBtn.classList.remove('recording');
-              micBtnLabel.textContent = "TOCA PARA HABLAR";
-              if (wakeLock) {
-                wakeLock.release().then(() => wakeLock = null);
-              }
+            if (wakeLock) {
+              try { wakeLock.release().then(() => wakeLock = null); } catch(e) {}
             }
           };
         }
 
         initRecognition();
 
-        micBtn.addEventListener('click', () => {
+        let pressTimer = null;
+        let isHolding = false;
+
+        function startListening() {
+          if (isRecording) return;
+          lastPublishedFinal = '';
+          currentSentenceText = '';
+          initRecognition();
+          try { recognition.start(); } catch(e) {}
+        }
+
+        function stopListening() {
+          if (!isRecording) return;
+          try { recognition.stop(); } catch(e) {}
+        }
+
+        // 1. Tocar una sola vez (Click / Tap)
+        micBtn.addEventListener('click', (e) => {
+          if (isHolding) {
+            isHolding = false;
+            return;
+          }
           if (!isRecording) {
-            lastPublishedFinal = '';
-            lastCommittedText = '';
-            currentSentenceText = '';
-            initRecognition();
-            try { recognition.start(); } catch(e) {}
+            startListening();
           } else {
-            isRecording = false;
-            commitSentence();
-            try { recognition.stop(); } catch(e) {}
+            stopListening();
+          }
+        });
+
+        // 2. Mantener presionado (Estilo WhatsApp audio / Walkie-Talkie)
+        micBtn.addEventListener('pointerdown', (e) => {
+          pressTimer = setTimeout(() => {
+            isHolding = true;
+            startListening();
+          }, 250);
+        });
+
+        micBtn.addEventListener('pointerup', (e) => {
+          clearTimeout(pressTimer);
+          if (isHolding) {
+            stopListening();
+            setTimeout(() => { isHolding = false; }, 300);
+          }
+        });
+
+        micBtn.addEventListener('pointercancel', (e) => {
+          clearTimeout(pressTimer);
+          if (isHolding) {
+            stopListening();
+            isHolding = false;
           }
         });
       }
