@@ -593,7 +593,8 @@
       </div>
       <img id="tv-media-img" class="tv-media-img" alt="Foto para la abuela" />
       <div id="tv-media-video-wrap" class="tv-media-video-wrap">
-        <iframe id="tv-media-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        <iframe id="tv-media-iframe" allow="autoplay; encrypted-media" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>
+        <video id="tv-media-video" controls autoplay playsinline style="width:100%; height:100%; display:none; border-radius:20px; object-fit:contain;"></video>
       </div>
       <div id="tv-media-subtitles" class="tv-media-subtitles"></div>
     </div>
@@ -757,6 +758,7 @@
       const tvMediaImg = document.getElementById('tv-media-img');
       const tvMediaVideoWrap = document.getElementById('tv-media-video-wrap');
       const tvMediaIframe = document.getElementById('tv-media-iframe');
+      const tvMediaVideo = document.getElementById('tv-media-video');
       const tvMediaSender = document.getElementById('tv-media-sender');
       const tvMediaIcon = document.getElementById('tv-media-icon');
       const tvMediaSubtitles = document.getElementById('tv-media-subtitles');
@@ -889,15 +891,41 @@
             tvMediaImg.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaVideoWrap.style.display = 'block';
-            tvMediaIframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0`;
-            tvMediaIcon.textContent = '🎥';
-            tvMediaSender.textContent = `Video de YouTube enviado por ${data.sender}`;
+
+            if (data.videoId) {
+              // Video de YouTube
+              if (tvMediaVideo) {
+                tvMediaVideo.pause();
+                tvMediaVideo.style.display = 'none';
+                tvMediaVideo.src = '';
+              }
+              tvMediaIframe.style.display = 'block';
+              tvMediaIframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0`;
+              tvMediaIcon.textContent = '🎥';
+              tvMediaSender.textContent = `Video de YouTube enviado por ${data.sender}`;
+            } else if (data.videoUrl) {
+              // Video directo MP4/WebM
+              tvMediaIframe.style.display = 'none';
+              tvMediaIframe.src = '';
+              if (tvMediaVideo) {
+                tvMediaVideo.style.display = 'block';
+                tvMediaVideo.src = data.videoUrl;
+                tvMediaVideo.play().catch(e => console.log('Autoplay:', e));
+              }
+              tvMediaIcon.textContent = '🎬';
+              tvMediaSender.textContent = `Video enviado por ${data.sender}`;
+            }
             tvMediaSender.style.color = data.color || '#C084FC';
           }
           else if (data.type === 'close_media') {
             tvMediaOverlay.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaIframe.src = '';
+            if (tvMediaVideo) {
+              tvMediaVideo.pause();
+              tvMediaVideo.src = '';
+              tvMediaVideo.style.display = 'none';
+            }
             tvMediaSubtitles.style.display = 'none';
           }
           else if (data.type === 'clear') {
@@ -913,6 +941,11 @@
             tvMediaOverlay.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaIframe.src = '';
+            if (tvMediaVideo) {
+              tvMediaVideo.pause();
+              tvMediaVideo.src = '';
+              tvMediaVideo.style.display = 'none';
+            }
             lastMessageEl = null;
             lastSender = '';
             lastText = '';
@@ -1209,21 +1242,25 @@
       });
 
       btnSendVideo.addEventListener('click', () => {
-        const input = prompt("Pegá el enlace de un video de YouTube para la abuela:\n(Ej: https://youtu.be/... o el ID del video)");
+        const input = prompt("Pegá el enlace del video para la abuela:\n• YouTube: https://youtu.be/... o youtube.com/watch?v=...\n• O enlace directo (MP4/WebM):");
         if (!input || !input.trim()) return;
 
-        let videoId = input.trim();
-        const urlMatch = input.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-        if (urlMatch) {
-          videoId = urlMatch[1];
-        }
+        const trimmed = input.trim();
+        const urlMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
 
-        client.publish(MQTT_TOPIC, JSON.stringify({
+        let payload = {
           type: 'video',
           sender: currentSender,
-          color: currentColor,
-          videoId: videoId
-        }));
+          color: currentColor
+        };
+
+        if (urlMatch) {
+          payload.videoId = urlMatch[1];
+        } else {
+          payload.videoUrl = trimmed;
+        }
+
+        client.publish(MQTT_TOPIC, JSON.stringify(payload));
 
         previewText.textContent = "✅ Video enviado a la TV";
         btnCloseMediaWrap.style.display = 'block';
