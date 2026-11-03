@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Subtítulos para la Abuela</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0B0F19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Hablar a la Abuela">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" type="image/png" href="./icon-192.png">
   <script src="./mqtt.min.js"></script>
   <script src="./qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -610,6 +617,18 @@
       </div>
       <div class="mic-status-pill" id="mic-status">Conectado a la TV</div>
     </header>
+
+    <!-- Tarjeta de acceso directo para el celular -->
+    <div class="install-card" id="install-card" style="background:#131B2E; border:1px solid rgba(56,189,248,0.3); border-radius:14px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.5rem;">📲</span>
+        <div style="font-size:0.82rem; color:#94A3B8; line-height:1.25;">
+          <strong style="color:#F8FAFC; font-size:0.9rem; display:block;">Ícono en tu Celular</strong>
+          <span>Abrí sin escanear el QR</span>
+        </div>
+      </div>
+      <a href="./HablarAbuela.apk" download style="background:#38BDF8; color:#0B0F19; font-weight:800; font-size:0.8rem; text-decoration:none; padding:8px 14px; border-radius:20px; white-space:nowrap; box-shadow: 0 2px 10px rgba(56,189,248,0.3);">Instalar App</a>
+    </div>
 
     <!-- Selector de persona -->
     <div class="speaker-selector-card">

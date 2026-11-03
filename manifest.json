@@ -1,0 +1,25 @@
+{
+  "name": "Hablar a la Abuela",
+  "short_name": "Tele Abuela",
+  "description": "Micrófono y transcripción de voz en vivo a la tele de la abuela",
+  "start_url": "./?mode=mic",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0F19",
+  "theme_color": "#0B0F19",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
