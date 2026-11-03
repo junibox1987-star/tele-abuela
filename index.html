@@ -310,27 +310,6 @@
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 230, 0, 0.25);
     }
 
-    /* Frase anterior leída: atenuada en gris suave para el ojo único */
-    .tv-overlay-prev {
-      display: none;
-      font-size: clamp(1.8rem, 3.2vw, 3.4rem);
-      font-weight: 700;
-      line-height: 1.22;
-      color: #94A3B8;
-      opacity: 0.82;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      padding-bottom: 6px;
-      margin-bottom: 2px;
-      word-break: break-word;
-    }
-
-    .tv-overlay-curr-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
     .tv-overlay-speaker {
       display: none;
       align-items: center;
@@ -342,18 +321,30 @@
       margin-bottom: 4px;
     }
 
-    /* Frase nueva abajo: letra gigante blanca brillante */
+    /* Texto encadenado: letra gigante, nítida y legible a 4 metros */
     .tv-overlay-text {
       font-size: clamp(2.8rem, 5.2vw, 5.6rem);
       font-weight: 900;
-      line-height: 1.16;
+      line-height: 1.2;
       color: #FFFFFF;
       text-shadow: 0 3px 14px rgba(0, 0, 0, 0.98), 0 1px 3px rgba(0, 0, 0, 1);
       word-break: break-word;
     }
 
-    .tv-overlay-banner.interim .tv-overlay-text {
+    .tv-overlay-text .sentence-prev {
+      color: #94A3B8;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+
+    .tv-overlay-text .sentence-latest {
+      color: #FFFFFF;
+      font-weight: 900;
+    }
+
+    .tv-overlay-text .sentence-interim {
       color: #FFE600;
+      font-weight: 900;
       text-shadow: 0 3px 14px rgba(0, 0, 0, 0.98), 0 0 20px rgba(255, 230, 0, 0.35);
     }
 
@@ -712,13 +703,10 @@
       <div class="tv-live-text" id="tv-live-text">...</div>
     </div>
 
-    <!-- Franja Flotante Centinela para Modo Overlay (Opción 1: Nuevo abajo, Anterior arriba en gris) -->
+    <!-- Franja Flotante Centinela para Modo Overlay (Texto Encadenado Continuo) -->
     <div class="tv-overlay-banner" id="tv-overlay-banner">
-      <div class="tv-overlay-prev" id="tv-overlay-prev"></div>
-      <div class="tv-overlay-curr-wrap">
-        <div class="tv-overlay-speaker" id="tv-overlay-speaker"></div>
-        <div class="tv-overlay-text" id="tv-overlay-text">...</div>
-      </div>
+      <div class="tv-overlay-speaker" id="tv-overlay-speaker"></div>
+      <div class="tv-overlay-text" id="tv-overlay-text">...</div>
     </div>
 
     <!-- Overlay de Fotos y Videos en TV -->
@@ -917,18 +905,17 @@
       const tvMediaSubtitles = document.getElementById('tv-media-subtitles');
 
       const tvOverlayBanner = document.getElementById('tv-overlay-banner');
-      const tvOverlayPrev = document.getElementById('tv-overlay-prev');
       const tvOverlaySpeaker = document.getElementById('tv-overlay-speaker');
       const tvOverlayText = document.getElementById('tv-overlay-text');
       let overlayTimer = null;
-      let lastFinalPhrase = "";
+      let chainedSentences = [];
 
       function updateOverlaySubtitle(sender, text, color, isInterim) {
         if (!tvOverlayBanner) return;
         clearTimeout(overlayTimer);
         tvOverlayBanner.classList.add('visible');
 
-        // Nombre opcional: SOLO si fue configurado por la persona
+        // Nombre opcional: SOLO si fue configurado expresamente
         const hasCustomName = sender && sender.trim() !== '' && sender.toLowerCase() !== 'sin nombre';
         if (hasCustomName) {
           tvOverlaySpeaker.style.display = 'inline-flex';
@@ -938,31 +925,45 @@
           tvOverlaySpeaker.innerHTML = '';
         }
 
-        // Opción 1 para la abuela de 98 años (un solo ojo):
-        // Lo que ya leyó se mantiene arriba en gris suave; la frase nueva entra abajo brillante
-        if (lastFinalPhrase && lastFinalPhrase.toLowerCase() !== text.toLowerCase()) {
-          tvOverlayPrev.style.display = 'block';
-          tvOverlayPrev.textContent = lastFinalPhrase;
-        } else if (!lastFinalPhrase) {
-          tvOverlayPrev.style.display = 'none';
-        }
-
+        // TEXTO ENCADENADO INTELIGENTE:
+        // No se borra lo anterior cuando vuelves a hablar. Se encadena a continuación con punto.
         if (isInterim) {
           tvOverlayBanner.classList.add('interim');
+          if (chainedSentences.length > 0) {
+            tvOverlayText.innerHTML = `<span class="sentence-prev">${chainedSentences.join('. ')}. </span><span class="sentence-interim">${text}</span>`;
+          } else {
+            tvOverlayText.innerHTML = `<span class="sentence-interim">${text}</span>`;
+          }
         } else {
           tvOverlayBanner.classList.remove('interim');
-          lastFinalPhrase = text;
+          // Agregar al historial encadenado evitando duplicados
+          const lastIdx = chainedSentences.length - 1;
+          if (lastIdx >= 0 && (chainedSentences[lastIdx].toLowerCase() === text.toLowerCase() || text.toLowerCase().startsWith(chainedSentences[lastIdx].toLowerCase()))) {
+            chainedSentences[lastIdx] = text;
+          } else {
+            chainedSentences.push(text);
+          }
+
+          // Mantener hasta 3 frases encadenadas para no desbordar
+          if (chainedSentences.length > 3) {
+            chainedSentences = chainedSentences.slice(-3);
+          }
+
+          if (chainedSentences.length === 1) {
+            tvOverlayText.innerHTML = `<span class="sentence-latest">${chainedSentences[0]}</span>`;
+          } else {
+            const prevText = chainedSentences.slice(0, -1).join('. ');
+            const currentText = chainedSentences[chainedSentences.length - 1];
+            tvOverlayText.innerHTML = `<span class="sentence-prev">${prevText}. </span><span class="sentence-latest">${currentText}</span>`;
+          }
         }
 
-        tvOverlayText.textContent = text;
-
-        // 25 segundos para lectura tranquila sin apuro
+        // 25 segundos de silencio antes de borrar el texto encadenado
         const hideDelay = isInterim ? 10000 : 25000;
         overlayTimer = setTimeout(() => {
           tvOverlayBanner.classList.remove('visible');
           tvOverlayBanner.classList.remove('interim');
-          lastFinalPhrase = "";
-          if (tvOverlayPrev) tvOverlayPrev.style.display = 'none';
+          chainedSentences = [];
         }, hideDelay);
       }
 
@@ -1151,8 +1152,7 @@
               clearTimeout(overlayTimer);
               tvOverlayBanner.classList.remove('visible');
               tvOverlayBanner.classList.remove('interim');
-              lastFinalPhrase = "";
-              if (tvOverlayPrev) tvOverlayPrev.style.display = 'none';
+              chainedSentences = [];
             }
             while (tvMessages.firstChild) {
               tvMessages.removeChild(tvMessages.firstChild);
