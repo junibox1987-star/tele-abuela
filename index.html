@@ -246,6 +246,79 @@
       color: #FFFFFF;
     }
 
+    /* ============================================================ */
+    /* MODO OVERLAY FLOTANTE (CENTINELA EN SEGUNDO PLANO)           */
+    /* ============================================================ */
+    body.mode-overlay {
+      background: transparent !important;
+      background-color: transparent !important;
+      overflow: hidden !important;
+    }
+    body.mode-overlay #tv-view {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    body.mode-overlay .tv-header,
+    body.mode-overlay .tv-idle,
+    body.mode-overlay .tv-messages,
+    body.mode-overlay .tv-live-bubble {
+      display: none !important;
+    }
+
+    .tv-overlay-banner {
+      display: none;
+      position: fixed;
+      left: 4vw;
+      right: 4vw;
+      bottom: 4vh;
+      z-index: 99999;
+      background: rgba(11, 15, 25, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 2.5px solid rgba(56, 189, 248, 0.5);
+      border-radius: 28px;
+      padding: 2.2vh 3.5vw;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.2);
+      opacity: 0;
+      transform: translateY(35px);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+      pointer-events: none;
+    }
+
+    body.mode-overlay .tv-overlay-banner {
+      display: block;
+    }
+
+    .tv-overlay-banner.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tv-overlay-banner.interim {
+      border-color: rgba(255, 230, 0, 0.75);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 230, 0, 0.25);
+    }
+
+    .tv-overlay-banner .tv-speaker-tag {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: clamp(1.4rem, 2.2vw, 2.4rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .tv-overlay-banner .tv-overlay-text {
+      font-size: clamp(2.8rem, 5.2vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.18;
+      color: #FFFFFF;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0,0,0,1);
+      word-break: break-word;
+    }
+
     /* Overlay de Medios en la TV (Fotos y Videos) */
     .tv-media-overlay {
       display: none;
@@ -581,15 +654,28 @@
         <div class="tv-idle-icon">👵💬</div>
         <h1 class="tv-idle-title">Subtítulos para la Abuela</h1>
         <p class="tv-idle-sub">Cualquier familiar puede escanear el código QR con su celular y hablar normal. Lo que digas aparecerá acá en letra gigante al instante.</p>
-        <a href="./SubtitulosAbuela.apk" class="tv-install-badge" download title="Descargar e instalar acceso directo en el menú de la tele">
-          <span>📥 Instalar acceso directo en el menú de la tele</span>
-        </a>
+        <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+          <a href="./SubtitulosAbuela.apk" class="tv-install-badge" download title="Descargar e instalar acceso directo en el menú de la tele">
+            <span>📺 Pantalla Completa</span>
+          </a>
+          <a href="./CentinelaAbuela.apk" class="tv-install-badge" style="border-color:rgba(74,222,128,0.5); color:#4ADE80; background:rgba(74,222,128,0.12);" download title="Subtítulos flotantes mientras ve televisión normal">
+            <span>🛡️ Centinela Flotante (Para Ver Tele Normal)</span>
+          </a>
+        </div>
       </div>
     </main>
 
     <div class="tv-live-bubble" id="tv-live-bubble">
       <div class="tv-speaker-tag" id="tv-live-speaker">🎙️ HABLANDO AHORA</div>
       <div class="tv-live-text" id="tv-live-text">...</div>
+    </div>
+
+    <!-- Franja Flotante Centinela para Modo Overlay -->
+    <div class="tv-overlay-banner" id="tv-overlay-banner">
+      <div class="tv-speaker-tag" id="tv-overlay-speaker">
+        <span>●</span> HABLANDO
+      </div>
+      <div class="tv-overlay-text" id="tv-overlay-text">...</div>
     </div>
 
     <!-- Overlay de Fotos y Videos en TV -->
@@ -695,11 +781,13 @@
     // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
     const room = urlParams.get('room') || 'abuela-victor';
-    const isTVParam = urlParams.get('mode') === 'tv';
-    const isMicParam = urlParams.get('mode') === 'mic';
+    const modeParam = urlParams.get('mode');
+    const isTVParam = modeParam === 'tv';
+    const isMicParam = modeParam === 'mic';
+    const isOverlayParam = modeParam === 'overlay';
 
     // Detección automática si no se especificó modo
-    const isTV = isTVParam || (!isMicParam && (
+    const isTV = isTVParam || isOverlayParam || (!isMicParam && (
       window.innerWidth >= 1200 || 
       /Android TV|Large Screen|SmartTV|CrKey|AFT/i.test(navigator.userAgent)
     ));
@@ -714,6 +802,9 @@
     // LÓGICA DE LA TELEVISIÓN
     // ============================================================
     if (isTV) {
+      if (isOverlayParam) {
+        document.body.classList.add('mode-overlay');
+      }
       document.getElementById('tv-view').style.display = 'flex';
       
       // Reloj en vivo
@@ -782,6 +873,31 @@
       const tvMediaIcon = document.getElementById('tv-media-icon');
       const tvMediaSubtitles = document.getElementById('tv-media-subtitles');
 
+      const tvOverlayBanner = document.getElementById('tv-overlay-banner');
+      const tvOverlaySpeaker = document.getElementById('tv-overlay-speaker');
+      const tvOverlayText = document.getElementById('tv-overlay-text');
+      let overlayTimer = null;
+
+      function updateOverlaySubtitle(sender, text, color, isInterim) {
+        if (!tvOverlayBanner) return;
+        clearTimeout(overlayTimer);
+        tvOverlayBanner.classList.add('visible');
+        if (isInterim) {
+          tvOverlayBanner.classList.add('interim');
+          tvOverlaySpeaker.innerHTML = `<span style="color:#FFE600">🎙️</span> <span style="color:${color || '#FFE600'}">${sender.toUpperCase()} ESTÁ HABLANDO...</span>`;
+        } else {
+          tvOverlayBanner.classList.remove('interim');
+          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#38BDF8'}">●</span> <span style="color:${color || '#38BDF8'}">${sender.toUpperCase()}</span>`;
+        }
+        tvOverlayText.textContent = text;
+
+        const hideDelay = isInterim ? 7000 : 16000;
+        overlayTimer = setTimeout(() => {
+          tvOverlayBanner.classList.remove('visible');
+          tvOverlayBanner.classList.remove('interim');
+        }, hideDelay);
+      }
+
       client.on('connect', () => {
         client.subscribe(MQTT_TOPIC);
         tvStatusText.textContent = "Conectado y listo";
@@ -848,6 +964,7 @@
             tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
             tvLiveText.textContent = liveText;
             showMediaSubtitle(data.sender, liveText, data.color);
+            updateOverlaySubtitle(data.sender, liveText, data.color, true);
           } 
           else if (data.type === 'final') {
             tvLiveBubble.style.display = 'none';
@@ -857,6 +974,7 @@
             if (!text) return;
 
             showMediaSubtitle(data.sender, text, data.color);
+            updateOverlaySubtitle(data.sender, text, data.color, false);
 
             // Ignorar duplicados exactos si llegan repetidos por eventos concurrentes
             if (lastMessageEl && lastSender === data.sender && text.toLowerCase() === lastText.toLowerCase() && (now - lastMsgTime < 5000)) {
@@ -949,6 +1067,11 @@
           }
           else if (data.type === 'clear') {
             // Limpiar pantalla
+            if (tvOverlayBanner) {
+              clearTimeout(overlayTimer);
+              tvOverlayBanner.classList.remove('visible');
+              tvOverlayBanner.classList.remove('interim');
+            }
             while (tvMessages.firstChild) {
               tvMessages.removeChild(tvMessages.firstChild);
             }
