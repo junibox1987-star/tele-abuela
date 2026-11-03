@@ -87,19 +87,45 @@
       padding: 10px 18px;
       border-radius: 18px;
       border: 1px solid rgba(255, 255, 255, 0.22);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tv-qr-box:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(56, 189, 248, 0.5);
     }
     .tv-qr-box .qr-img-wrap {
-      background: #FFFFFF;
+      background: #0B0F19;
       padding: 8px;
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .tv-qr-box .qr-img-wrap canvas,
+    .tv-qr-box .qr-img-wrap img {
+      border-radius: 8px;
+      display: block;
+    }
+    .tv-qr-box .qr-info-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
     .tv-qr-box span {
       font-size: 1.35vw;
       color: #F1F5F9;
       font-weight: 700;
       line-height: 1.35;
+    }
+    .tv-qr-box .qr-hint {
+      font-size: 0.9vw;
+      color: #94A3B8;
+      font-weight: 500;
     }
 
     /* Contenedor principal de mensajes */
@@ -512,9 +538,12 @@
         <div class="tv-status-dot"></div>
         <span id="tv-status-text">Listo para escuchar</span>
       </div>
-      <div class="tv-qr-box">
+      <div class="tv-qr-box" id="tv-qr-box" title="Hacé clic para cambiar contraste del QR">
         <div class="qr-img-wrap" id="qrcode"></div>
-        <span>Escaneá con el celular<br>para hablar</span>
+        <div class="qr-info-wrap">
+          <span>Escaneá con el celular<br>para hablar</span>
+          <div class="qr-hint" id="qr-theme-label">Anti-reflejo (Oscuro)</div>
+        </div>
       </div>
     </header>
 
@@ -652,14 +681,45 @@
 
       // Generar código QR para conectar celulares a este mismo link en modo mic
       const micUrl = window.location.origin + window.location.pathname + `?mode=mic&room=${room}`;
-      new QRCode(document.getElementById("qrcode"), {
-        text: micUrl,
-        width: 140,
-        height: 140,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.M
-      });
+      const qrContainer = document.getElementById("qrcode");
+      const qrThemeLabel = document.getElementById("qr-theme-label");
+      const tvQrBox = document.getElementById("tv-qr-box");
+
+      const qrThemes = [
+        { label: 'Anti-reflejo (Oscuro)', bg: '#0B0F19', fg: '#FFFFFF', border: 'rgba(56, 189, 248, 0.5)', glow: '0 0 16px rgba(56, 189, 248, 0.25)' },
+        { label: 'Mate Suave (Universal)', bg: '#CBD5E1', fg: '#000000', border: 'rgba(255, 255, 255, 0.5)', glow: 'none' },
+        { label: 'Blanco Clásico', bg: '#FFFFFF', fg: '#000000', border: 'rgba(255, 255, 255, 0.3)', glow: 'none' }
+      ];
+      let currentThemeIdx = 0;
+      let qrCodeObj = null;
+
+      function renderQrCode(idx) {
+        currentThemeIdx = idx % qrThemes.length;
+        const theme = qrThemes[currentThemeIdx];
+        qrContainer.innerHTML = '';
+        qrContainer.style.background = theme.bg;
+        qrContainer.style.borderColor = theme.border;
+        qrContainer.style.boxShadow = `0 4px 20px rgba(0, 0, 0, 0.8)${theme.glow !== 'none' ? ', ' + theme.glow : ''}`;
+        if (qrThemeLabel) {
+          qrThemeLabel.textContent = theme.label;
+        }
+        qrCodeObj = new QRCode(qrContainer, {
+          text: micUrl,
+          width: 150,
+          height: 150,
+          colorDark: theme.fg,
+          colorLight: theme.bg,
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+
+      renderQrCode(0);
+
+      if (tvQrBox) {
+        tvQrBox.addEventListener('click', () => {
+          renderQrCode(currentThemeIdx + 1);
+        });
+      }
 
       const tvMessages = document.getElementById('tv-messages');
       const tvIdle = document.getElementById('tv-idle');
