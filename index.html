@@ -361,14 +361,18 @@
       align-items: center;
       justify-content: center;
       padding: 1.5vh 2vw;
-      animation: fadeIn 0.3s ease;
+      /* Anti-transparencia: sin animación de entrada (un fadeIn congelado a media
+         marcha dejaba la foto semitransparente y se veía la TV a través) */
+      opacity: 1 !important;
+      transition: none !important;
+      animation: none !important;
     }
     .tv-media-badge {
       position: absolute;
       top: 2vh; left: 3vw;
       font-size: 1.6vw;
       font-weight: 800;
-      background: rgba(20, 25, 35, 0.95);
+      background: #0F172A;
       padding: 6px 20px;
       border-radius: 30px;
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -386,6 +390,7 @@
       border-radius: 14px;
       box-shadow: 0 0 60px rgba(0, 0, 0, 1);
       object-fit: contain;
+      opacity: 1 !important;
       display: none;
     }
     .tv-media-video-wrap {
@@ -410,7 +415,7 @@
       font-weight: 900;
       color: #FFE600;
       text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95);
-      background: rgba(0, 0, 0, 0.85);
+      background: #000000;
       padding: 12px 28px;
       border-radius: 18px;
       border: 2px solid rgba(255, 230, 0, 0.4);
@@ -1124,6 +1129,9 @@
           else if (data.type === 'photo') {
             document.body.classList.add('has-media');
             tvMediaOverlay.style.display = 'flex';
+            // Blindaje anti-transparencia: forzar opacidad total ya y a los 400ms
+            tvMediaOverlay.style.opacity = '1';
+            setTimeout(() => { tvMediaOverlay.style.opacity = '1'; }, 400);
             tvMediaVideoWrap.style.display = 'none';
             tvMediaIframe.src = '';
             tvMediaImg.style.display = 'block';
@@ -1136,6 +1144,9 @@
           else if (data.type === 'video') {
             document.body.classList.add('has-media');
             tvMediaOverlay.style.display = 'flex';
+            // Blindaje anti-transparencia: forzar opacidad total ya y a los 400ms
+            tvMediaOverlay.style.opacity = '1';
+            setTimeout(() => { tvMediaOverlay.style.opacity = '1'; }, 400);
             tvMediaImg.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaVideoWrap.style.display = 'block';
@@ -1398,6 +1409,13 @@
 
           recognition.onerror = (event) => {
             console.warn("Speech recognition error:", event.error);
+            // Visible para la familia: antes un micrófono muerto era indistinguible
+            // de "la app no abre" porque el error solo iba a la consola.
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+              previewText.textContent = "⚠️ Micrófono bloqueado — habilitá el permiso de micrófono del navegador y volvé a tocar";
+            } else {
+              previewText.textContent = "⚠️ Micrófono no disponible (" + event.error + ") — tocá el micrófono para reintentar";
+            }
           };
 
           recognition.onend = () => {
