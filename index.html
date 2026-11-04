@@ -1021,6 +1021,8 @@
           tvMediaSubtitles.style.display = 'block';
           tvMediaSubtitles.style.color = color || '#FFE600';
           tvMediaSubtitles.textContent = `${sender}: ${text}`;
+          // Subtitulos sobre la foto NATIVA (MediaActivity opaca del APK)
+          if (window.AndroidBridge) { try { AndroidBridge.setSubtitle(`${sender}: ${text}`, color || '#FFE600'); } catch (e) { console.error('bridge setSubtitle', e); } }
           clearTimeout(mediaSubtitleTimeout);
           mediaSubtitleTimeout = setTimeout(() => {
             tvMediaSubtitles.style.display = 'none';
@@ -1140,6 +1142,10 @@
             const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
             tvMediaSender.textContent = data.caption || (hasSender ? `Foto de ${data.sender}` : 'Foto para la abuela');
             tvMediaSender.style.color = data.color || '#38BDF8';
+            // Foto NATIVA 100% opaca: el firmware fuerza alpha=0.8 en ventanas
+            // overlay (launcher sangra a traves); MediaActivity (Activity) no
+            // esta clamped. El overlay queda como fallback en navegadores.
+            if (window.AndroidBridge) { try { AndroidBridge.showPhoto(data.image); } catch (e) { console.error('bridge showPhoto', e); } }
           }
           else if (data.type === 'video') {
             document.body.classList.add('has-media');
@@ -1189,6 +1195,7 @@
               tvMediaVideo.style.display = 'none';
             }
             tvMediaSubtitles.style.display = 'none';
+            if (window.AndroidBridge) { try { AndroidBridge.closeMedia(); } catch (e) { console.error('bridge closeMedia', e); } }
           }
           else if (data.type === 'clear') {
             // Limpiar pantalla
@@ -1210,6 +1217,7 @@
             tvMediaOverlay.style.display = 'none';
             tvMediaImg.src = '';
             tvMediaIframe.src = '';
+            if (window.AndroidBridge) { try { AndroidBridge.closeMedia(); } catch (e) { console.error('bridge closeMedia', e); } }
             if (tvMediaVideo) {
               tvMediaVideo.pause();
               tvMediaVideo.src = '';
