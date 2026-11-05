@@ -831,7 +831,22 @@
     const MQTT_BROKER = 'wss://broker.hivemq.com:8884/mqtt';
     const MQTT_TOPIC = `teleabuela/${room}/subtitulos`;
     const clientId = 'sub_' + Math.random().toString(16).substring(2, 10);
-    const client = mqtt.connect(MQTT_BROKER, { clientId });
+    const client = mqtt.connect(MQTT_BROKER, {
+      clientId,
+      // FIX 05-nov (tarde): hivemq publico CORTA conexiones (12:07:41 lo hizo con
+      // todos los suscriptores a la vez) y limita la tasa de reconexiones por IP.
+      // Con el backoff por defecto de mqtt.js (1s), cada corte del broker se
+      // convierte en una tormenta de reconexiones que mantiene el limitador
+      // caliente: el broker acepta el TCP y lo cierra a los ~9s, en loop
+      // perpetuo, sin suscripcion -> tele sorda para siempre. Evidencia: socket
+      // de la tele churneando cada ~9s durante 15+ min mientras el mismo broker
+      // mantenia estable una conexion desde otra IP. Backoff de 30s deja enfriar
+      // el limitador; la proxima conexion vuelve a aguantar.
+      reconnectPeriod: 30000,
+      connectTimeout: 20000,
+      keepalive: 45
+    });
+    window.PAGE_VERSION = '2026-11-05b-mqtt-backoff';
     window.client = client;
 
     // ============================================================
@@ -1005,7 +1020,7 @@
             console.error("Error en watchdog reconnect:", e);
           }
         }
-      }, 10000);
+      }, 30000);
 
       window.addEventListener('online', () => {
         if (!client.connected) client.reconnect();
