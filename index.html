@@ -990,16 +990,22 @@
         console.log("MQTT offline");
       });
 
-      // Watchdog de reconexión continua cada 5 segundos (vital tras reposo/standby de la TV)
+      // Watchdog de reconexion GENTIL (fix 05-nov: el viejo llamaba reconnect()
+      // cada 5s si !connected, CANCELANDO el handshake TLS en curso de mqtt.js
+      // y generando un espiral de muerte: socket re-creado cada ~5s, nunca se
+      // completa el MQTT CONNECT, la pagina queda sorda y los mensajes se
+      // pierden (QoS0). Ahora solo actua cuando mqtt.js NO esta ya intentando
+      // conectar (client.connecting / client.reconnecting) y cada 10s — el
+      // backoff propio de mqtt.js maneja los reintentos normales.
       setInterval(() => {
-        if (!client.connected) {
+        if (!client.connected && !client.connecting && !client.reconnecting) {
           try {
             client.reconnect();
           } catch (e) {
             console.error("Error en watchdog reconnect:", e);
           }
         }
-      }, 5000);
+      }, 10000);
 
       window.addEventListener('online', () => {
         if (!client.connected) client.reconnect();
