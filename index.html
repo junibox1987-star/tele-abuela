@@ -843,9 +843,21 @@
 
     const MQTT_BROKER = 'wss://broker.hivemq.com:8884/mqtt';
     const MQTT_TOPIC = `teleabuela/${room}/subtitulos`;
-    const clientId = 'sub_' + Math.random().toString(16).substring(2, 10);
+    // 11-nov: clientId ESTABLE por dispositivo (localStorage) + sesión persistente
+    // (clean:false) + QoS 1 → el broker le GUARDA los mensajes a la tele mientras
+    // reconecta (hivemq corta conexiones, trampa documentada 05-nov). Antes el
+    // clientId era random por carga y con clean:true cada corte perdía todo lo
+    // publicado en la ventana ciega: "a veces no agarra los mensajes".
+    const MQTT_CLIENT_KEY = 'teleabuela_client_id';
+    let clientId = null;
+    try { clientId = localStorage.getItem(MQTT_CLIENT_KEY); } catch (e) {}
+    if (!clientId) {
+      clientId = (isMicParam ? 'mic_' : 'tv_') + Math.random().toString(16).substring(2, 12);
+      try { localStorage.setItem(MQTT_CLIENT_KEY, clientId); } catch (e) {}
+    }
     const client = mqtt.connect(MQTT_BROKER, {
       clientId,
+      clean: false,
       // FIX 05-nov (tarde): hivemq publico CORTA conexiones (12:07:41 lo hizo con
       // todos los suscriptores a la vez) y limita la tasa de reconexiones por IP.
       // Con el backoff por defecto de mqtt.js (1s), cada corte del broker se
@@ -857,9 +869,12 @@
       // el limitador; la proxima conexion vuelve a aguantar.
       reconnectPeriod: 30000,
       connectTimeout: 20000,
-      keepalive: 45
+      // 11-nov: 45→20s — detectar conexiones muertas más rápido acorta las
+      // ventanas sordas (con sesión persistente el costo es cero: lo publicado
+      // con QoS1 mientras tanto queda encolado en el broker)
+      keepalive: 20
     });
-    window.PAGE_VERSION = '2026-11-11-accesibilidad-gigante';
+    window.PAGE_VERSION = '2026-11-11b-mqtt-sesion-persistente';
     window.client = client;
 
     // ============================================================
@@ -996,7 +1011,9 @@
       }
 
       client.on('connect', () => {
-        client.subscribe(MQTT_TOPIC);
+        // 11-nov: QoS 1 — con la sesión persistente, lo publicado mientras la
+        // tele está reconectando le llega apenas vuelve (antes QoS 0 = perdido)
+        client.subscribe(MQTT_TOPIC, { qos: 1 });
         tvStatusText.textContent = "Conectado y listo";
         console.log("MQTT conectado a la sala:", MQTT_TOPIC);
       });
@@ -1380,7 +1397,7 @@
             sender: currentSender,
             color: currentColor,
             text: textToCommit
-          }));
+          }), { qos: 1 });
 
           previewText.textContent = `✅ Enviado a la TV: "${textToCommit}"`;
           currentSentenceText = '';
@@ -1557,7 +1574,7 @@
               color: currentColor,
               image: compressedData,
               caption: 'Foto para la abuela'
-            }));
+            }), { qos: 1 });
 
             previewText.textContent = "✅ ¡Foto enviada a la TV!";
             btnCloseMediaWrap.style.display = 'block';
@@ -1588,21 +1605,21 @@
           payload.videoUrl = trimmed;
         }
 
-        client.publish(MQTT_TOPIC, JSON.stringify(payload));
+        client.publish(MQTT_TOPIC, JSON.stringify(payload), { qos: 1 });
 
         previewText.textContent = "✅ Video enviado a la TV";
         btnCloseMediaWrap.style.display = 'block';
       });
 
       btnCloseMedia.addEventListener('click', () => {
-        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'close_media' }));
+        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'close_media' }), { qos: 1 });
         btnCloseMediaWrap.style.display = 'none';
         previewText.textContent = "Foto/Video cerrado en la TV.";
       });
 
       // Limpiar pantalla de TV
       document.getElementById('btn-clear-tv').addEventListener('click', () => {
-        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'clear' }));
+        client.publish(MQTT_TOPIC, JSON.stringify({ type: 'clear' }), { qos: 1 });
         previewText.textContent = "Pantalla de TV limpiada.";
         btnCloseMediaWrap.style.display = 'none';
       });
@@ -1616,7 +1633,7 @@
             sender: currentSender,
             color: currentColor,
             text: text.trim()
-          }));
+          }), { qos: 1 });
           previewText.textContent = text.trim();
         }
       });
