@@ -149,12 +149,14 @@
       overflow: hidden;
     }
 
-    /* Mensajes archivados anteriores */
+    /* Mensajes archivados anteriores — 11-nov: 0.45 era invisible para la
+       abuela (contraste reducido 3-5x a los 98 años). 0.85 mantiene la
+       jerarquía (el último destaca en 1.0) sin desaparecer. */
     .tv-msg {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      opacity: 0.45;
+      opacity: 0.85;
       transition: all 0.4s ease;
     }
     .tv-msg:last-of-type {
@@ -164,14 +166,17 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 2vw;
+      font-size: 2.5vw;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.5px;
     }
+    /* 11-nov: NIVEL GIGANTE (~12cm de alto en tele 55" ≈ 2° de arco a 2m).
+       Abuela 98 años con mala visión de lejos: el clamp anterior topaba en
+       5.5rem (88px ≈ 5.5cm ≈ 0.9°) — el mínimo justo para ojo joven. */
     .tv-text {
-      font-size: clamp(2.8rem, 5.2vw, 5.5rem);
-      font-weight: 800;
+      font-size: clamp(4rem, 10vw, 12rem);
+      font-weight: 900;
       line-height: 1.18;
       letter-spacing: -0.5px;
       word-break: break-word;
@@ -191,7 +196,7 @@
       margin-bottom: 8px;
     }
     .tv-live-text {
-      font-size: clamp(3.2rem, 5.8vw, 6.2rem);
+      font-size: clamp(4.5rem, 11vw, 13rem);
       font-weight: 900;
       color: #FFE600;
       line-height: 1.15;
@@ -222,7 +227,7 @@
     }
     .tv-idle-sub {
       font-size: 2.2vw;
-      color: #94A3B8;
+      color: #CBD5E1;
       max-width: 65vw;
       line-height: 1.4;
     }
@@ -314,16 +319,17 @@
       display: none;
       align-items: center;
       gap: 8px;
-      font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+      font-size: clamp(1.6rem, 2.8vw, 2.8rem);
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1.5px;
       margin-bottom: 4px;
     }
 
-    /* Texto encadenado: letra gigante, nítida y legible a 4 metros */
+    /* Texto encadenado: NIVEL GIGANTE (igual que .tv-text). Optimizado para
+       los 2m de distancia cama-tele de la abuela (antes decía "4 metros"). */
     .tv-overlay-text {
-      font-size: clamp(2.8rem, 5.2vw, 5.6rem);
+      font-size: clamp(4rem, 10vw, 12rem);
       font-weight: 900;
       line-height: 1.2;
       color: #FFFFFF;
@@ -332,9 +338,11 @@
     }
 
     .tv-overlay-text .sentence-prev {
-      color: #94A3B8;
+      /* 11-nov: #94A3B8 (gris azulado) se ve MUY oscuro con cristalino
+         amarillento — los azules se apagan a los 98 años. Gris claro neutro. */
+      color: #D9D9D9;
       font-weight: 700;
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .tv-overlay-text .sentence-latest {
@@ -411,7 +419,8 @@
       bottom: 3.5vh;
       left: 5vw; right: 5vw;
       text-align: center;
-      font-size: clamp(2rem, 3.8vw, 4rem);
+      /* 11-nov: gigante también sobre fotos/videos (antes cap 4rem) */
+      font-size: clamp(3rem, 7.5vw, 9rem);
       font-weight: 900;
       color: #FFE600;
       text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95);
@@ -759,11 +768,11 @@
     <div class="speaker-selector-card">
       <label>¿Quién habla? (Opcional)</label>
       <div class="speaker-chips" id="speaker-chips">
-        <button type="button" class="speaker-chip active" data-name="" data-color="#38BDF8">Sin nombre</button>
-        <button type="button" class="speaker-chip" data-name="Nieto/a" data-color="#4ADE80">Nieto/a</button>
-        <button type="button" class="speaker-chip" data-name="Hijo/a" data-color="#F472B6">Hijo/a</button>
-        <button type="button" class="speaker-chip" data-name="Mamá" data-color="#FB923C">Mamá</button>
-        <button type="button" class="speaker-chip" data-name="Familia" data-color="#A78BFA">Familia</button>
+        <button type="button" class="speaker-chip active" data-name="" data-color="#5BD1FF">Sin nombre</button>
+        <button type="button" class="speaker-chip" data-name="Nieto/a" data-color="#8CFFB0">Nieto/a</button>
+        <button type="button" class="speaker-chip" data-name="Hijo/a" data-color="#FF9ED2">Hijo/a</button>
+        <button type="button" class="speaker-chip" data-name="Mamá" data-color="#FFC08A">Mamá</button>
+        <button type="button" class="speaker-chip" data-name="Familia" data-color="#D7FF6E">Familia</button>
       </div>
       <input type="text" id="custom-name" class="custom-name-input" placeholder="O escribe tu nombre si quieres (opcional)" value="">
     </div>
@@ -849,7 +858,7 @@
       connectTimeout: 20000,
       keepalive: 45
     });
-    window.PAGE_VERSION = '2026-11-05b-mqtt-backoff';
+    window.PAGE_VERSION = '2026-11-11-accesibilidad-gigante';
     window.client = client;
 
     // ============================================================
@@ -942,7 +951,7 @@
         const hasCustomName = sender && sender.trim() !== '' && sender.toLowerCase() !== 'sin nombre';
         if (hasCustomName) {
           tvOverlaySpeaker.style.display = 'inline-flex';
-          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#38BDF8'}">● ${sender}</span>`;
+          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#5BD1FF'}">● ${sender}</span>`;
         } else {
           tvOverlaySpeaker.style.display = 'none';
           tvOverlaySpeaker.innerHTML = '';
@@ -967,9 +976,10 @@
             chainedSentences.push(text);
           }
 
-          // Mantener hasta 3 frases encadenadas para no desbordar
-          if (chainedSentences.length > 3) {
-            chainedSentences = chainedSentences.slice(-3);
+          // 11-nov: máximo 2 frases encadenadas — con letra GIGANTE (10vw) tres
+          // frases desbordaban el banner flotante del modo overlay
+          if (chainedSentences.length > 2) {
+            chainedSentences = chainedSentences.slice(-2);
           }
 
           if (chainedSentences.length === 1) {
@@ -1054,8 +1064,10 @@
         }
       }
 
+      // 11-nov: 2 mensajes en vez de 4 — con letra GIGANTE cada línea mide
+      // ~220px y 4 mensajes se comían toda la pantalla
       function pruneMessages() {
-        while (tvMessages.children.length > 4) {
+        while (tvMessages.children.length > 2) {
           if (tvMessages.children[0] !== tvIdle) {
             tvMessages.removeChild(tvMessages.children[0]);
           } else {
@@ -1137,7 +1149,7 @@
               msgEl.className = 'tv-msg';
               const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
               const speakerTagHtml = hasSender ? `
-                <div class="tv-speaker-tag" style="color: ${data.color || '#38BDF8'}">
+                <div class="tv-speaker-tag" style="color: ${data.color || '#5BD1FF'}">
                   <span>●</span> ${data.sender}
                 </div>` : '';
               msgEl.innerHTML = `
@@ -1165,7 +1177,7 @@
             tvMediaIcon.textContent = '📷';
             const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
             tvMediaSender.textContent = data.caption || (hasSender ? `Foto de ${data.sender}` : 'Foto para la abuela');
-            tvMediaSender.style.color = data.color || '#38BDF8';
+            tvMediaSender.style.color = data.color || '#5BD1FF';
             // Foto NATIVA 100% opaca: el firmware fuerza alpha=0.8 en ventanas
             // overlay (launcher sangra a traves); MediaActivity (Activity) no
             // esta clamped. El overlay queda como fallback en navegadores.
@@ -1206,7 +1218,7 @@
               const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
               tvMediaSender.textContent = hasSender ? `Video enviado por ${data.sender}` : 'Video para la abuela';
             }
-            tvMediaSender.style.color = data.color || '#C084FC';
+            tvMediaSender.style.color = data.color || '#FF9ED2';
           }
           else if (data.type === 'close_media') {
             document.body.classList.remove('has-media');
@@ -1278,7 +1290,7 @@
       const btnCloseMediaWrap = document.getElementById('btn-close-media-wrap');
 
       let currentSender = localStorage.getItem('teleabuela_speaker_name') || "";
-      let currentColor = localStorage.getItem('teleabuela_speaker_color') || "#38BDF8";
+      let currentColor = localStorage.getItem('teleabuela_speaker_color') || "#5BD1FF";
       let isRecording = false;
       let recognition = null;
       let wakeLock = null;
@@ -1343,7 +1355,7 @@
           chips.forEach(c => c.classList.remove('active'));
           chip.classList.add('active');
           currentSender = chip.dataset.name || "";
-          currentColor = chip.dataset.color || "#38BDF8";
+          currentColor = chip.dataset.color || "#5BD1FF";
           customNameInput.value = currentSender;
           localStorage.setItem('teleabuela_speaker_name', currentSender);
           localStorage.setItem('teleabuela_speaker_color', currentColor);
