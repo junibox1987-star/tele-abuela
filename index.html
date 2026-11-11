@@ -144,8 +144,9 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      gap: 2.5vh;
-      padding: 3vh 0;
+      /* 11-nov: espacios reducidos — cada vh cuenta con letra gigante */
+      gap: 1.5vh;
+      padding: 1.5vh 0;
       overflow: hidden;
     }
 
@@ -155,7 +156,7 @@
     .tv-msg {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 0;
       opacity: 0.85;
       transition: all 0.4s ease;
     }
@@ -187,7 +188,7 @@
       display: none;
       background: rgba(255, 230, 0, 0.08);
       border-left: 8px solid #FFE600;
-      padding: 1.5vh 2.5vw;
+      padding: 1vh 2vw;
       border-radius: 0 20px 20px 0;
       animation: fadeIn 0.3s ease;
     }
@@ -947,15 +948,9 @@
         clearTimeout(overlayTimer);
         tvOverlayBanner.classList.add('visible');
 
-        // Nombre opcional: SOLO si fue configurado expresamente
-        const hasCustomName = sender && sender.trim() !== '' && sender.toLowerCase() !== 'sin nombre';
-        if (hasCustomName) {
-          tvOverlaySpeaker.style.display = 'inline-flex';
-          tvOverlaySpeaker.innerHTML = `<span style="color:${color || '#5BD1FF'}">● ${sender}</span>`;
-        } else {
-          tvOverlaySpeaker.style.display = 'none';
-          tvOverlaySpeaker.innerHTML = '';
-        }
+        // 11-nov: quién habla no se muestra — para la abuela el nombre es ruido
+        tvOverlaySpeaker.style.display = 'none';
+        tvOverlaySpeaker.innerHTML = '';
 
         // TEXTO ENCADENADO INTELIGENTE:
         // No se borra lo anterior cuando vuelves a hablar. Se encadena a continuación con punto.
@@ -1054,9 +1049,9 @@
         if (tvMediaOverlay && tvMediaOverlay.style.display === 'flex') {
           tvMediaSubtitles.style.display = 'block';
           tvMediaSubtitles.style.color = color || '#FFE600';
-          tvMediaSubtitles.textContent = `${sender}: ${text}`;
-          // Subtitulos sobre la foto NATIVA (MediaActivity opaca del APK)
-          if (window.AndroidBridge) { try { AndroidBridge.setSubtitle(`${sender}: ${text}`, color || '#FFE600'); } catch (e) { console.error('bridge setSubtitle', e); } }
+          // 11-nov: sin prefijo de nombre — a letra gigante el ancho es oro
+          tvMediaSubtitles.textContent = text;
+          if (window.AndroidBridge) { try { AndroidBridge.setSubtitle(text, color || '#FFE600'); } catch (e) { console.error('bridge setSubtitle', e); } }
           clearTimeout(mediaSubtitleTimeout);
           mediaSubtitleTimeout = setTimeout(() => {
             tvMediaSubtitles.style.display = 'none';
@@ -1105,14 +1100,9 @@
             // Texto en tiempo real mientras la persona habla
             const liveText = stripDuplicateHalves((data.text || '').trim());
             tvLiveBubble.style.display = 'block';
-            const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
-            if (hasSender) {
-              tvLiveSpeaker.style.display = 'block';
-              tvLiveSpeaker.textContent = `🎙️ ${data.sender} ESTÁ HABLANDO...`;
-              tvLiveSpeaker.style.color = data.color || '#FFE600';
-            } else {
-              tvLiveSpeaker.style.display = 'none';
-            }
+            // 11-nov: nombre del hablante eliminado — el amarillo ya indica
+            // "están hablando ahora"; el nombre era ruido para ella
+            tvLiveSpeaker.style.display = 'none';
             tvLiveBubble.style.borderLeftColor = data.color || '#FFE600';
             tvLiveText.textContent = liveText;
             showMediaSubtitle(data.sender, liveText, data.color);
@@ -1145,17 +1135,11 @@
               lastText = text;
               lastMsgTime = now;
             } else {
+              // 11-nov: SIN etiqueta de nombre — quién habla no le importa a la
+              // abuela; solo el texto, más grande y más limpio
               const msgEl = document.createElement('div');
               msgEl.className = 'tv-msg';
-              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
-              const speakerTagHtml = hasSender ? `
-                <div class="tv-speaker-tag" style="color: ${data.color || '#5BD1FF'}">
-                  <span>●</span> ${data.sender}
-                </div>` : '';
-              msgEl.innerHTML = `
-                ${speakerTagHtml}
-                <div class="tv-text">${text}</div>
-              `;
+              msgEl.innerHTML = `<div class="tv-text">${text}</div>`;
               tvMessages.appendChild(msgEl);
               lastMessageEl = msgEl;
               lastSender = data.sender;
@@ -1175,8 +1159,7 @@
             tvMediaImg.style.display = 'block';
             tvMediaImg.src = data.image;
             tvMediaIcon.textContent = '📷';
-            const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
-            tvMediaSender.textContent = data.caption || (hasSender ? `Foto de ${data.sender}` : 'Foto para la abuela');
+            tvMediaSender.textContent = data.caption || 'Foto para la abuela';
             tvMediaSender.style.color = data.color || '#5BD1FF';
             // Foto NATIVA 100% opaca: el firmware fuerza alpha=0.8 en ventanas
             // overlay (launcher sangra a traves); MediaActivity (Activity) no
@@ -1203,8 +1186,7 @@
               tvMediaIframe.style.display = 'block';
               tvMediaIframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0`;
               tvMediaIcon.textContent = '🎥';
-              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
-              tvMediaSender.textContent = hasSender ? `Video de YouTube enviado por ${data.sender}` : 'Video de YouTube para la abuela';
+              tvMediaSender.textContent = 'Video para la abuela';
             } else if (data.videoUrl) {
               // Video directo MP4/WebM
               tvMediaIframe.style.display = 'none';
@@ -1215,8 +1197,7 @@
                 tvMediaVideo.play().catch(e => console.log('Autoplay:', e));
               }
               tvMediaIcon.textContent = '🎬';
-              const hasSender = data.sender && data.sender.trim() && data.sender.toLowerCase() !== 'sin nombre';
-              tvMediaSender.textContent = hasSender ? `Video enviado por ${data.sender}` : 'Video para la abuela';
+              tvMediaSender.textContent = 'Video para la abuela';
             }
             tvMediaSender.style.color = data.color || '#FF9ED2';
           }
@@ -1569,13 +1550,13 @@
 
             const compressedData = canvas.toDataURL('image/jpeg', 0.75);
 
-            const hasSender = currentSender && currentSender.trim() && currentSender.toLowerCase() !== 'sin nombre';
+            // 11-nov: caption sin nombre — quién mandó la foto no le importa a la abuela
             client.publish(MQTT_TOPIC, JSON.stringify({
               type: 'photo',
               sender: currentSender || '',
               color: currentColor,
               image: compressedData,
-              caption: hasSender ? `Foto enviada por ${currentSender}` : 'Foto para la abuela'
+              caption: 'Foto para la abuela'
             }));
 
             previewText.textContent = "✅ ¡Foto enviada a la TV!";
